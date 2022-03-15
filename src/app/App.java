@@ -1,34 +1,15 @@
 package app;
 
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import app.server.Server;
 
 public class App {
 
-    public static Socket clientSocket;
-    public static ServerSocket serverSocket;
-    private static ArrayList<ThreadManager> threads = new ArrayList<>();
-    private static Executor threadPool = Executors.newFixedThreadPool(4);
 
     public static void main(String[] args) throws Exception {
+        Server s1 = new Server("s1", 4444);
+        s1.init_server();
 
-        serverSocket = new ServerSocket(4444);
-        System.out.println("Server Listening!");
-
-        while (true) {
-            try {
-                clientSocket = serverSocket.accept();
-                System.out.println("Connection Established!");
-                ThreadManager threadManager = new ThreadManager(clientSocket);
-                threads.add(threadManager);
-                threadPool.execute(threadManager);
-            } catch (Exception e) {
-                System.out.println(e);
-            }
-        }
     }
+
 
 }
