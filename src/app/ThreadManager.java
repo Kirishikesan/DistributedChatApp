@@ -24,11 +24,11 @@ public class ThreadManager implements Runnable {
     @Override
     public void run() {
         while (true) {
-            System.out.println("Thread started");
             String msg = null;
             JSONObject client_obj = null;
             JSONParser parser = new JSONParser();
 
+            System.out.println("Thread started");
 
             try {
                 msg = bufferedReader.readLine();
@@ -37,6 +37,7 @@ public class ThreadManager implements Runnable {
             } catch (IOException | ParseException e) {
                 e.printStackTrace();
             }
+
             System.out.println("client_obj");
             System.out.println(client_obj.toString());
         }
