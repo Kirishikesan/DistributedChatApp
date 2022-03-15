@@ -2,13 +2,14 @@ package app.server;
 
 import app.room.ChatRoom;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class Server {
+public class Server implements Runnable{
 
     private String serverid;
 
@@ -16,8 +17,8 @@ public class Server {
     private ChatRoom deault_chatRoom;
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
-    private static ArrayList<ThreadManager> threads = new ArrayList<>();
-    private static Executor threadPool = Executors.newFixedThreadPool(4);
+    private static ArrayList<ThreadManager> client_threads = new ArrayList<>();
+    private static Executor client_threadPool = Executors.newFixedThreadPool(4);
 
     public Server(String serverid, int port) {
         this.serverid = serverid;
@@ -25,9 +26,15 @@ public class Server {
         deault_chatRoom = create_chat_room(serverid,"MainHall-" + serverid, "");
     }
 
-    public void init_server() throws Exception {
+    @Override
+    public void run() {
 
-        serverSocket = new ServerSocket(port);
+        try {
+            serverSocket = new ServerSocket(port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         System.out.println("Server-" +serverid + " Listening!");
 
         while (true) {
@@ -35,8 +42,8 @@ public class Server {
                 clientSocket = serverSocket.accept();
                 System.out.println("Connection Established!");
                 ThreadManager threadManager = new ThreadManager(clientSocket);
-                threads.add(threadManager);
-                threadPool.execute(threadManager);
+                client_threads.add(threadManager);
+                client_threadPool.execute(threadManager);
             } catch (Exception e) {
                 System.out.println(e);
             }

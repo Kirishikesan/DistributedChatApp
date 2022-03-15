@@ -28,7 +28,7 @@ public class ThreadManager implements Runnable {
             JSONObject client_obj = null;
             JSONParser parser = new JSONParser();
 
-            System.out.println("Thread started");
+            System.out.println("clientSocket thread started");
 
             try {
                 msg = bufferedReader.readLine();
@@ -38,7 +38,6 @@ public class ThreadManager implements Runnable {
                 e.printStackTrace();
             }
 
-            System.out.println("client_obj");
             System.out.println(client_obj.toString());
         }
     }
