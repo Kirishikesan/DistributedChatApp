@@ -1,4 +1,4 @@
-package app;
+package app.server;
 
 
 import java.io.BufferedReader;
@@ -33,7 +33,7 @@ public class ThreadManager implements Runnable {
             try {
                 msg = bufferedReader.readLine();
                 client_obj = (JSONObject) parser.parse(msg);
-                writer.println(client_obj.toString());
+                writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
             } catch (IOException | ParseException e) {
                 e.printStackTrace();
             }
