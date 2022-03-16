@@ -5,7 +5,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,16 +18,16 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 
-public class ThreadManager implements Runnable {
+public class Client implements Runnable {
 
     private final BufferedReader bufferedReader;
     private final PrintWriter writer;
     public CopyOnWriteArrayList<ChatRoom> chatRoomsList;
     private String clientId;
     private String roomId;
-    private final ArrayList<ThreadManager> clients;
+    private final ArrayList<Client> clients;
 
-    public ThreadManager(Socket clientSocket, CopyOnWriteArrayList<ChatRoom> chatRoomsList, ArrayList<ThreadManager> clients) throws IOException {
+    public Client(Socket clientSocket, CopyOnWriteArrayList<ChatRoom> chatRoomsList, ArrayList<Client> clients) throws IOException {
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         writer = new PrintWriter(clientSocket.getOutputStream(), true);
         this.chatRoomsList = chatRoomsList;

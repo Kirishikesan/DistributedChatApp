@@ -20,7 +20,7 @@ public class Server implements Runnable {
     public CopyOnWriteArrayList<ChatRoom> chatRoomsList = new CopyOnWriteArrayList<ChatRoom>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
-    private static final ArrayList<ThreadManager> client_threads = new ArrayList<>();
+    private static final ArrayList<Client> client_threads = new ArrayList<>();
     private static final Executor client_threadPool = Executors.newFixedThreadPool(4);
 
     public Server(String serverId, String server_address, int clients_port, int coordination_port) {
@@ -47,7 +47,7 @@ public class Server implements Runnable {
             try {
                 clientSocket = serverSocket.accept();
                 System.out.println("Connection Established!");
-                ThreadManager threadManager = new ThreadManager(clientSocket, chatRoomsList, client_threads);
+                Client threadManager = new Client(clientSocket, chatRoomsList, client_threads);
                 client_threads.add(threadManager);
                 client_threadPool.execute(threadManager);
             } catch (Exception e) {
