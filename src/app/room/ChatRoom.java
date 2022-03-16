@@ -1,5 +1,6 @@
 package app.room;
 
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChatRoom {
@@ -19,8 +20,13 @@ public class ChatRoom {
     }
 
     public void removeMember(String clientId) {
-        int index = members.indexOf(clientId);
-        if (index != -1) members.remove(index);
+        List<String> remainingClients= new ArrayList<>();
+        List<Object> iter = Arrays.asList(members.toArray());
+        iter.forEach(member->{
+            if(!(Objects.equals((String) member, clientId)))remainingClients.add((String) member);
+        });
+        members.clear();
+        members.addAll(remainingClients);
     }
 
     public String getRoomId() {
