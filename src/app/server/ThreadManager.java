@@ -22,7 +22,7 @@ public class ThreadManager implements Runnable {
     private final PrintWriter writer;
     public CopyOnWriteArrayList<ChatRoom> chatRoomList;
     private String clientId;
-    private ArrayList<ThreadManager> clients;
+    private final ArrayList<ThreadManager> clients;
 
     public ThreadManager(Socket clientSocket, CopyOnWriteArrayList<ChatRoom> chatRoomsList, ArrayList<ThreadManager> clients) throws IOException {
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -60,9 +60,16 @@ public class ThreadManager implements Runnable {
                         JSONObject roomChangeResJsonObj = ClientResponse.roomChangeResponse(clientId, chatRoomList.get(0).getRoomId(), (String) client_obj.get("roomid"));
                         writer.println(roomChangeResJsonObj);
                         for (ThreadManager client : clients) {
-                            client.writer.println(roomChangeResJsonObj);
+                            if (chatRoomList.get(0).getMembers().contains(client.clientId))
+                                client.writer.println(roomChangeResJsonObj);
                         }
                     }
+
+//                    listing all rooms
+                } else if (client_obj.get("type").equals("list")) {
+                    JSONObject listRoomsResJsonObj = ClientResponse.listRoomsResponse(chatRoomList);
+                    writer.println(listRoomsResJsonObj);
+
                 }
             } catch (IOException | ParseException e) {
                 e.printStackTrace();
@@ -72,8 +79,7 @@ public class ThreadManager implements Runnable {
 
     private boolean createChatRoom(JSONObject client_obj) {
         String newRoomId = (String) client_obj.get("roomid");
-        if (createRoomValidation(newRoomId)) {
-            boolean isValid = true;
+        if (createChatRoomValidation(newRoomId)) {
             for (ChatRoom chatRoom : chatRoomList) {
                 if (chatRoom.getRoomId().equals(newRoomId) || chatRoom.getOwner().equals(clientId)) {
                     return false;
@@ -87,8 +93,8 @@ public class ThreadManager implements Runnable {
         return false;
     }
 
-    private boolean createRoomValidation(String roomId) {
-        if (roomId.length() >= 3 && roomId.length() <= 16) {
+    private boolean createChatRoomValidation(String roomId) {
+        if (roomId.length() >= 3 && roomId.length() <= 16 && Character.isLetter(roomId.charAt(0))) {
             char[] roomIdChars = roomId.toCharArray();
             for (char character : roomIdChars) {
                 if (!Character.isLetterOrDigit(character)) return false;
