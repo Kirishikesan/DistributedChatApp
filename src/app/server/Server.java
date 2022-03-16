@@ -12,13 +12,13 @@ import java.util.concurrent.Executors;
 
 public class Server implements Runnable {
 
-    private String serverId;
-    private int port;
+    private final String serverId;
+    private final int port;
     public CopyOnWriteArrayList<ChatRoom> chatRoomsList = new CopyOnWriteArrayList<ChatRoom>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
-    private static ArrayList<ThreadManager> client_threads = new ArrayList<>();
-    private static Executor client_threadPool = Executors.newFixedThreadPool(4);
+    private static final ArrayList<ThreadManager> client_threads = new ArrayList<>();
+    private static final Executor client_threadPool = Executors.newFixedThreadPool(4);
 
     public Server(String serverId, int port) {
         this.serverId = serverId;
