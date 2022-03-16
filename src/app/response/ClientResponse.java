@@ -4,27 +4,24 @@ import app.room.ChatRoom;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientResponse {
 
     @SuppressWarnings("unchecked")
-    public static JSONObject createRoomResponse(boolean isRoomSuccess, String roomId) {
+    public static JSONObject createChatRoomResponse(boolean isRoomSuccess, String roomId) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "createroom");
         responseObj.put("roomid", roomId);
-
-        if (isRoomSuccess) responseObj.put("approved", "true");
-        else responseObj.put("approved", "false");
+        responseObj.put("approved", String.valueOf(isRoomSuccess));
 
         return responseObj;
     }
 
 
     @SuppressWarnings("unchecked")
-    public static JSONObject roomChangeResponse(String clientId, String formerRoomId, String newRoomId) {
+    public static JSONObject changeChatRoomResponse(String clientId, String formerRoomId, String newRoomId) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "roomchange");
         responseObj.put("identity", clientId);
@@ -35,12 +32,23 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject listRoomsResponse(CopyOnWriteArrayList<ChatRoom> chatRoomList) {
+    public static JSONObject listChatRoomsResponse(CopyOnWriteArrayList<ChatRoom> chatRoomList) {
         List<String> chatRoomsList = new ArrayList<>();
         chatRoomList.forEach(chatRoom -> chatRoomsList.add(chatRoom.getRoomId()));
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "roomlist");
         responseObj.put("rooms", chatRoomsList);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject joinChatRoomResponse(String clientId, String formerRoomId, String joiningRoomId) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "roomchange");
+        responseObj.put("identity", clientId);
+        responseObj.put("former", formerRoomId);
+        responseObj.put("roomid", joiningRoomId);
 
         return responseObj;
     }
