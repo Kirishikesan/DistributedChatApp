@@ -1,28 +1,29 @@
 package app.room;
+
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChatRoom {
-    private String serverid;
-    private String roomid;
-    private String owner;
+    private final String roomid;
+    private final String owner;
     private CopyOnWriteArrayList<String> members = new CopyOnWriteArrayList<String>();
 
-    public ChatRoom(String serverid, String roomid, String owner) {
-        this.serverid = serverid;
-        this.roomid = roomid;
+    public ChatRoom(String roomId, String owner) {
+        this.roomid = roomId;
         this.owner = owner;
-        System.out.println("Create chatroom "+ roomid);
+        members.add(owner);
+        System.out.println("Create chatroom " + roomId);
     }
 
-    void add_members(String client){
-        members.add(client);
+    public void addMember(String clientId) {
+        members.add(clientId);
     }
 
-    public String getServerid() {
-        return serverid;
+    public void removeMember(String clientId) {
+        int index = members.indexOf(clientId);
+        if (index != -1) members.remove(index);
     }
 
-    public String getRoomid() {
+    public String getRoomId() {
         return roomid;
     }
 
