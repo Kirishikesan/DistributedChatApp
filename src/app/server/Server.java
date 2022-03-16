@@ -6,24 +6,25 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class Server implements Runnable{
+public class Server implements Runnable {
 
-    private String serverid;
-
+    private String serverId;
     private int port;
-    private ChatRoom deault_chatRoom;
+    public CopyOnWriteArrayList<ChatRoom> chatRoomsList = new CopyOnWriteArrayList<ChatRoom>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
     private static ArrayList<ThreadManager> client_threads = new ArrayList<>();
     private static Executor client_threadPool = Executors.newFixedThreadPool(4);
 
-    public Server(String serverid, int port) {
-        this.serverid = serverid;
+    public Server(String serverId, int port) {
+        this.serverId = serverId;
         this.port = port;
-        deault_chatRoom = create_chat_room(serverid,"MainHall-" + serverid, "");
+        ChatRoom default_chatRoom = create_chat_room("MainHall-" + serverId);
+        chatRoomsList.add(0, default_chatRoom);
     }
 
     @Override
@@ -35,13 +36,13 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
 
-        System.out.println("Server-" +serverid + " Listening!");
+        System.out.println("Server-" + serverId + " Listening!");
 
         while (true) {
             try {
                 clientSocket = serverSocket.accept();
                 System.out.println("Connection Established!");
-                ThreadManager threadManager = new ThreadManager(clientSocket);
+                ThreadManager threadManager = new ThreadManager(clientSocket, chatRoomsList, client_threads);
                 client_threads.add(threadManager);
                 client_threadPool.execute(threadManager);
             } catch (Exception e) {
@@ -51,13 +52,12 @@ public class Server implements Runnable{
 
     }
 
-    ChatRoom create_chat_room(String serverid, String roomid, String owner){
-        ChatRoom chatroom = new ChatRoom(serverid, roomid, owner);
-        return chatroom;
+    ChatRoom create_chat_room(String roomId) {
+        return new ChatRoom(roomId, "");
     }
 
-    public String getServerid() {
-        return serverid;
+    public String getserverId() {
+        return serverId;
     }
 
 
