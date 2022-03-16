@@ -13,16 +13,21 @@ import java.util.concurrent.Executors;
 public class Server implements Runnable {
 
     private String serverId;
-    private int port;
+    private String server_address;
+    private int clients_port;
+    private int coordination_port;
+
     public CopyOnWriteArrayList<ChatRoom> chatRoomsList = new CopyOnWriteArrayList<ChatRoom>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
     private static ArrayList<ThreadManager> client_threads = new ArrayList<>();
     private static Executor client_threadPool = Executors.newFixedThreadPool(4);
 
-    public Server(String serverId, int port) {
+    public Server(String serverId, String server_address, int clients_port, int coordination_port) {
         this.serverId = serverId;
-        this.port = port;
+        this.server_address = server_address;
+        this.clients_port = clients_port;
+        this.coordination_port = coordination_port;
         ChatRoom default_chatRoom = create_chat_room("MainHall-" + serverId);
         chatRoomsList.add(0, default_chatRoom);
     }
@@ -31,7 +36,7 @@ public class Server implements Runnable {
     public void run() {
 
         try {
-            serverSocket = new ServerSocket(port);
+            serverSocket = new ServerSocket(clients_port);
         } catch (IOException e) {
             e.printStackTrace();
         }
