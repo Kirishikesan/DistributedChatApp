@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -16,8 +16,8 @@ public class Server implements Runnable {
     private String server_address;
     private int clients_port;
     private int coordination_port;
-  
-    public CopyOnWriteArrayList<ChatRoom> chatRoomsList = new CopyOnWriteArrayList<ChatRoom>();
+
+    ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
     private static final ArrayList<Client> client_threads = new ArrayList<>();
@@ -29,7 +29,7 @@ public class Server implements Runnable {
         this.clients_port = clients_port;
         this.coordination_port = coordination_port;
         ChatRoom default_chatRoom = create_chat_room("MainHall-" + serverId);
-        chatRoomsList.add(0, default_chatRoom);
+        chatRoomsMap.put("MainHall-" + serverId,default_chatRoom);
     }
 
     @Override
@@ -47,11 +47,11 @@ public class Server implements Runnable {
             try {
                 clientSocket = serverSocket.accept();
                 System.out.println("Connection Established!");
-                Client threadManager = new Client(clientSocket, chatRoomsList, client_threads);
-                client_threads.add(threadManager);
-                client_threadPool.execute(threadManager);
+                Client client = new Client(clientSocket, client_threads, chatRoomsMap);
+                client_threads.add(client);
+                client_threadPool.execute(client);
             } catch (Exception e) {
-                System.out.println(e);
+                System.out.println("***********" + e);
             }
         }
 
