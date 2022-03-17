@@ -53,4 +53,14 @@ public class ClientResponse {
 
         return responseObj;
     }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject messageChatRoom(String clientId, String content) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "message");
+        responseObj.put("identity", clientId);
+        responseObj.put("content", content);
+
+        return responseObj;
+    }
 }
