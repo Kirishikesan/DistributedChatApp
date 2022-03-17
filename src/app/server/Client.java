@@ -19,20 +19,23 @@ import org.json.simple.parser.ParseException;
 
 public class Client implements Runnable {
 
-    private final BufferedReader bufferedReader;
-    private final PrintWriter writer;
+    private BufferedReader bufferedReader;
+    private PrintWriter writer;
     public ConcurrentHashMap<String, ChatRoom> chatRoomsMap;
-    private String clientId;
+    public String clientId;
     private String roomId;
-    private final ArrayList<Client> clients;
+    private ArrayList<Client> clients;
 
-    public Client(Socket clientSocket, ArrayList<Client> clients, ConcurrentHashMap<String, ChatRoom> chstRoomsMap) throws IOException {
+    public Client() {
+    }
+
+    public Client(Socket clientSocket, ArrayList<Client> clients, ConcurrentHashMap<String, ChatRoom> chatRoomsMap) throws IOException {
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         writer = new PrintWriter(clientSocket.getOutputStream(), true);
-        this.chatRoomsMap = chstRoomsMap;
+        this.chatRoomsMap = chatRoomsMap;
 
         this.clients = clients;
-        roomId = chstRoomsMap.get(chstRoomsMap.keySet().toArray()[0]).getRoomId();
+        roomId = chatRoomsMap.get(chatRoomsMap.keySet().toArray()[0]).getRoomId();
     }
 
     @Override
@@ -52,7 +55,7 @@ public class Client implements Runnable {
                 if (client_obj.get("type").equals("newidentity")) {
                     clientId = (String) client_obj.get("identity");
                     ChatRoom mainHall = chatRoomsMap.get(chatRoomsMap.keySet().toArray()[0]);
-                    mainHall.addMember(clientId, roomId);
+                    mainHall.addMember(this, roomId);
                     writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
 
 //                creating rooms
@@ -70,11 +73,11 @@ public class Client implements Runnable {
                             }
                         }
                         JSONObject roomChangeResJsonObj = ClientResponse.changeChatRoomResponse(clientId, formerChatRoom.getRoomId(), (String) client_obj.get("roomid"));
-                        ConcurrentHashMap<String, String> notifyingClients = formerChatRoom.getMembers();
+                        ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
                         writer.println(roomChangeResJsonObj);
-                        clients.forEach(client -> notifyingClients.forEach((key,value) -> {
-                            if (client.clientId.equals(value)) client.writer.println(roomChangeResJsonObj);
-                        }));
+                        notifyingClients.forEach((key, client) -> {
+                           if (!key.equals("default")) client.writer.println(roomChangeResJsonObj);
+                        });
                     }
 
 //                    listing all rooms
@@ -101,11 +104,11 @@ public class Client implements Runnable {
                                 break;
                             }
                         }
-                        ConcurrentHashMap<String, String> notifyingClients = formerChatRoom.getMembers();
+                        ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
                         notifyingClients.putAll(newChatRoom.getMembers());
-                        clients.forEach(client -> notifyingClients.forEach((key,value) -> {
-                            if (client.clientId.equals(value)) client.writer.println(listRoomsResJsonObj);
-                        }));
+                        notifyingClients.forEach((key, client) -> {
+                            if (!key.equals("default")) client.writer.println(listRoomsResJsonObj);
+                        });
                     } else {
                         writer.println(listRoomsResJsonObj);
                     }
@@ -126,10 +129,9 @@ public class Client implements Runnable {
                     return roomIdsArray;
                 }
             }
-            ChatRoom newChatRoom = new ChatRoom(newRoomId, clientId);
+            ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
             chatRoomsMap.put(newRoomId, newChatRoom);
             System.out.println("*************Create chat room ****************** former = " + roomId);
-//            ChatRoom formerChatRoom = m.entrySet().stream().filter((key) -> key.getValue().getRoomId().equals(roomId)).collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
             ChatRoom formerChatRoom = null;
             for (String key : chatRoomsMap.keySet()) {
                 if (chatRoomsMap.get(key).getRoomId().equals(roomId)) {
@@ -138,13 +140,13 @@ public class Client implements Runnable {
                 }
             }
 
-            formerChatRoom.removeMember(clientId, roomId);
+            formerChatRoom.removeMember(this, roomId);
             roomIdsArray[1] = newRoomId;
             roomId = newRoomId;
-            chatRoomsMap.forEach((key, value)->{
-                System.out.println(key);
-                System.out.println(value.getMembers());
-            });
+//            chatRoomsMap.forEach((key, value) -> {
+//                System.out.println(key);
+//                System.out.println(value.getMembers());
+//            });
             return roomIdsArray;
         }
         return roomIdsArray;
@@ -169,7 +171,7 @@ public class Client implements Runnable {
                 }
             }
 
-            formerChatRoom.removeMember(clientId, roomId);
+            formerChatRoom.removeMember(this, roomId);
 
             ChatRoom newChatRoom = null;
             for (String key : chatRoomsMap.keySet()) {
@@ -178,13 +180,9 @@ public class Client implements Runnable {
                     break;
                 }
             }
-            newChatRoom.addMember(clientId, joiningRoomId);
+            newChatRoom.addMember(this, joiningRoomId);
             roomIdsArray[1] = joiningRoomId;
             roomId = joiningRoomId;
-//            m.forEach((key,value)->{
-//                System.out.println(key);
-//                System.out.println(value.getMembers());
-//            });
             return roomIdsArray;
         }
         return roomIdsArray;
