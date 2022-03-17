@@ -51,7 +51,7 @@ public class Server implements Runnable {
                 client_threads.add(client);
                 client_threadPool.execute(client);
             } catch (Exception e) {
-                System.out.println("***********" + e);
+                System.out.println(e);
             }
         }
 

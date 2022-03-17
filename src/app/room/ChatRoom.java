@@ -26,6 +26,10 @@ public class ChatRoom {
         members.put(client.clientId, client);
     }
 
+    public void addMembers(ConcurrentHashMap<String, Client> clients) {
+        members.putAll(clients);
+    }
+
     public void removeMember(Client client) {
         members.remove(client.clientId);
     }

@@ -53,4 +53,14 @@ public class ClientResponse {
 
         return responseObj;
     }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject deleteChatRoomResponse(String joiningRoomId, String approved) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "deleteroom");
+        responseObj.put("roomid", joiningRoomId);
+        responseObj.put("approved", approved);
+
+        return responseObj;
+    }
 }
