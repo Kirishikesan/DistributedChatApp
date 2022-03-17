@@ -106,6 +106,7 @@ public class Client implements Runnable {
                     } else {
                         writer.println(listRoomsResJsonObj);
                     }
+
                 }else if (client_obj.get("type").equals("deleteroom")) {
                     String[] roomIdsArray = deleteRoomId(client_obj);
 
@@ -114,6 +115,19 @@ public class Client implements Runnable {
                     this.writer.println(listRoomsResJsonObj);
 
                     // TO Do - notify servers
+
+                } else if (client_obj.get("type").equals("message")) {
+                    JSONObject messageChatRoomsJsonObj = ClientResponse.messageChatRoom(clientId, (String) client_obj.get("content"));
+
+                    for (String key : Server.chatRoomsMap.keySet()) {
+                        if (Server.chatRoomsMap.get(key).getRoomId().equals(roomId)) {
+                            Server.chatRoomsMap.get(key).getMembers().forEach((new_key, client) -> {
+                                if (!new_key.equals("default") && !client.clientId.equals(clientId)) client.writer.println(messageChatRoomsJsonObj);
+                            });
+                            break;
+                        }
+                    }
+
 
                 }
             } catch (IOException | ParseException e) {
