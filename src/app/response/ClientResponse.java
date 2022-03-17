@@ -55,11 +55,22 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
+    public static JSONObject deleteChatRoomResponse(String joiningRoomId, String approved) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "deleteroom");
+        responseObj.put("roomid", joiningRoomId);
+        responseObj.put("approved", approved);
+
+        return responseObj;
+    }
+      
+    @SuppressWarnings("unchecked")
     public static JSONObject messageChatRoom(String clientId, String content) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "message");
         responseObj.put("identity", clientId);
         responseObj.put("content", content);
+
 
         return responseObj;
     }

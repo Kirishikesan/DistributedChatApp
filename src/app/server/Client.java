@@ -106,6 +106,16 @@ public class Client implements Runnable {
                     } else {
                         writer.println(listRoomsResJsonObj);
                     }
+
+                }else if (client_obj.get("type").equals("deleteroom")) {
+                    String[] roomIdsArray = deleteRoomId(client_obj);
+
+                    boolean isRoomDeleteSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
+                    JSONObject listRoomsResJsonObj = ClientResponse.deleteChatRoomResponse(roomIdsArray[0], String.valueOf(isRoomDeleteSuccess));
+                    this.writer.println(listRoomsResJsonObj);
+
+                    // TO Do - notify servers
+
                 } else if (client_obj.get("type").equals("message")) {
                     JSONObject messageChatRoomsJsonObj = ClientResponse.messageChatRoom(clientId, (String) client_obj.get("content"));
 
@@ -117,6 +127,7 @@ public class Client implements Runnable {
                             break;
                         }
                     }
+
 
                 }
             } catch (IOException | ParseException e) {
@@ -195,5 +206,68 @@ public class Client implements Runnable {
             return true;
         }
         return false;
+    }
+
+    private String[] deleteRoomId(JSONObject client_obj) {
+        String deleteRoomId = (String) client_obj.get("roomid");
+        String[] roomIdsArray = {roomId, roomId};
+        boolean isDeleteRoomIdExist = false;
+        boolean isDeleteRoomOwnerExist = false;
+        for (String key : Server.chatRoomsMap.keySet()) {
+            if (Server.chatRoomsMap.get(key).getRoomId().equals(deleteRoomId)) isDeleteRoomIdExist = true;
+            if (Server.chatRoomsMap.get(key).getOwner().equals(clientId)) isDeleteRoomOwnerExist = true;
+        }
+        if (isDeleteRoomIdExist && isDeleteRoomOwnerExist) {
+
+            //move all members to main hall
+            ChatRoom formerChatRoom = Server.chatRoomsMap.get(deleteRoomId);
+            String mainHallRoomId = (String) Server.chatRoomsMap.keySet().toArray()[0];
+            ChatRoom mainHall = Server.chatRoomsMap.get(mainHallRoomId);
+
+            ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
+
+            String[] moveRoomIdsArray = moveAll(formerChatRoom, mainHall);
+            boolean isClientsMoveSuccess = !Objects.equals(moveRoomIdsArray[0], moveRoomIdsArray[1]);
+
+            if (isClientsMoveSuccess) {
+                //notify all about move
+                notifyingClients.forEach((notifyClient_key, notifyClient) -> {
+                    notifyingClients.forEach((formerClient_key, formerClient) -> {
+                        if (!formerClient_key.equals("default")){
+                            JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(formerClient_key, moveRoomIdsArray[0], moveRoomIdsArray[1]);
+                            if (!notifyClient_key.equals("default")) notifyClient.writer.println(listRoomsResJsonObj);
+                        }
+                    });
+                });
+
+                //delete chat room
+                Server.chatRoomsMap.remove(deleteRoomId);
+
+                //notify all about delete
+                roomIdsArray[1] = mainHall.getRoomId();;
+                roomId = mainHall.getRoomId();;
+            }
+
+//            Server.chatRoomsMap.forEach((key, value) -> {
+//                System.out.println(key);
+//                value.getMembers().forEach((key1,value1)->{
+//                    System.out.println(value1.clientId);
+//                });
+//            });
+            return roomIdsArray;
+        }
+        return roomIdsArray;
+    }
+
+    private String[] moveAll(ChatRoom formerChatRoom, ChatRoom mainHall) {
+        String[] roomIdsArray = {roomId, roomId};
+
+        ConcurrentHashMap<String, Client> formerChatRoomClients = formerChatRoom.getMembers();
+        mainHall.addMembers(formerChatRoomClients);
+
+        roomIdsArray[1] = mainHall.getRoomId();
+        roomId = mainHall.getRoomId();
+
+        return roomIdsArray;
     }
 }
