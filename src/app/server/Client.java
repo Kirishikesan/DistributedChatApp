@@ -7,9 +7,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import app.response.ClientResponse;
 import app.room.ChatRoom;
@@ -22,17 +21,18 @@ public class Client implements Runnable {
 
     private final BufferedReader bufferedReader;
     private final PrintWriter writer;
-    public CopyOnWriteArrayList<ChatRoom> chatRoomsList;
+    public ConcurrentHashMap<String, ChatRoom> chatRoomsMap;
     private String clientId;
     private String roomId;
     private final ArrayList<Client> clients;
 
-    public Client(Socket clientSocket, CopyOnWriteArrayList<ChatRoom> chatRoomsList, ArrayList<Client> clients) throws IOException {
+    public Client(Socket clientSocket, ArrayList<Client> clients, ConcurrentHashMap<String, ChatRoom> chstRoomsMap) throws IOException {
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         writer = new PrintWriter(clientSocket.getOutputStream(), true);
-        this.chatRoomsList = chatRoomsList;
+        this.chatRoomsMap = chstRoomsMap;
+
         this.clients = clients;
-        roomId = chatRoomsList.get(0).getRoomId();
+        roomId = chstRoomsMap.get(chstRoomsMap.keySet().toArray()[0]).getRoomId();
     }
 
     @Override
@@ -51,44 +51,62 @@ public class Client implements Runnable {
 //                adding users
                 if (client_obj.get("type").equals("newidentity")) {
                     clientId = (String) client_obj.get("identity");
-                    ChatRoom mainHall = chatRoomsList.get(0);
-                    mainHall.addMember(clientId);
+                    ChatRoom mainHall = chatRoomsMap.get(chatRoomsMap.keySet().toArray()[0]);
+                    mainHall.addMember(clientId, roomId);
                     writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
 
 //                creating rooms
                 } else if (client_obj.get("type").equals("createroom")) {
-                    String[] roomIdsArray  = createChatRoom(client_obj);
+                    String[] roomIdsArray = createChatRoom(client_obj);
                     boolean isRoomCreateSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
                     JSONObject createRoomResJsonObj = ClientResponse.createChatRoomResponse(isRoomCreateSuccess, (String) client_obj.get("roomid"));
                     writer.println(createRoomResJsonObj);
                     if (isRoomCreateSuccess) {
-                        JSONObject roomChangeResJsonObj = ClientResponse.changeChatRoomResponse(clientId, chatRoomsList.get(0).getRoomId(), (String) client_obj.get("roomid"));
-                        ChatRoom formerChatRoom = chatRoomsList.stream().filter(chatRoom -> chatRoom.getRoomId().equals(roomIdsArray[0])).toList().get(0);
-                        List<String> notifyingClients = formerChatRoom.getMembers();
+                        ChatRoom formerChatRoom = null;
+                        for (String key : chatRoomsMap.keySet()) {
+                            if (chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
+                                formerChatRoom = chatRoomsMap.get(key);
+                                break;
+                            }
+                        }
+                        JSONObject roomChangeResJsonObj = ClientResponse.changeChatRoomResponse(clientId, formerChatRoom.getRoomId(), (String) client_obj.get("roomid"));
+                        ConcurrentHashMap<String, String> notifyingClients = formerChatRoom.getMembers();
                         writer.println(roomChangeResJsonObj);
-                        clients.forEach(client -> notifyingClients.forEach(notifyingClient -> {
-                            if (client.clientId.equals(notifyingClient)) client.writer.println(roomChangeResJsonObj);
+                        clients.forEach(client -> notifyingClients.forEach((key,value) -> {
+                            if (client.clientId.equals(value)) client.writer.println(roomChangeResJsonObj);
                         }));
                     }
 
 //                    listing all rooms
                 } else if (client_obj.get("type").equals("list")) {
-                    JSONObject listRoomsResJsonObj = ClientResponse.listChatRoomsResponse(chatRoomsList);
+                    JSONObject listRoomsResJsonObj = ClientResponse.listChatRoomsResponse(chatRoomsMap);
                     writer.println(listRoomsResJsonObj);
 
                 } else if (client_obj.get("type").equals("joinroom")) {
                     String[] roomIdsArray = joiningRoomId(client_obj);
                     JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, roomIdsArray[0], roomIdsArray[1]);
 
-                    if (roomIdsArray[0] != roomIdsArray[1]) {
-                        ChatRoom formerChatRoom = chatRoomsList.stream().filter(chatRoom -> chatRoom.getRoomId().equals(roomIdsArray[0])).toList().get(0);
-                        ChatRoom newChatRoom = chatRoomsList.stream().filter(chatRoom -> chatRoom.getRoomId().equals(roomIdsArray[1])).toList().get(0);
-                        List<String> notifyingClients = formerChatRoom.getMembers();
-                        notifyingClients.addAll(newChatRoom.getMembers());
-                        clients.forEach(client -> notifyingClients.forEach(notifyingClient -> {
-                            if (client.clientId.equals(notifyingClient)) client.writer.println(listRoomsResJsonObj);
+                    if (!Objects.equals(roomIdsArray[0], roomIdsArray[1])) {
+                        ChatRoom formerChatRoom = null;
+                        for (String key : chatRoomsMap.keySet()) {
+                            if (chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
+                                formerChatRoom = chatRoomsMap.get(key);
+                                break;
+                            }
+                        }
+                        ChatRoom newChatRoom = null;
+                        for (String key : chatRoomsMap.keySet()) {
+                            if (chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[1])) {
+                                newChatRoom = chatRoomsMap.get(key);
+                                break;
+                            }
+                        }
+                        ConcurrentHashMap<String, String> notifyingClients = formerChatRoom.getMembers();
+                        notifyingClients.putAll(newChatRoom.getMembers());
+                        clients.forEach(client -> notifyingClients.forEach((key,value) -> {
+                            if (client.clientId.equals(value)) client.writer.println(listRoomsResJsonObj);
                         }));
-                    }else{
+                    } else {
                         writer.println(listRoomsResJsonObj);
                     }
 
@@ -103,17 +121,30 @@ public class Client implements Runnable {
         String newRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
         if (createChatRoomValidation(newRoomId)) {
-            for (ChatRoom chatRoom : chatRoomsList) {
-                if (chatRoom.getRoomId().equals(newRoomId) || chatRoom.getOwner().equals(clientId)) {
+            for (String key : chatRoomsMap.keySet()) {
+                if (chatRoomsMap.get(key).getRoomId().equals(newRoomId) || chatRoomsMap.get(key).getOwner().equals(clientId)) {
                     return roomIdsArray;
                 }
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, clientId);
-            chatRoomsList.add(newChatRoom);
-            ChatRoom formerChatRoom = chatRoomsList.stream().filter(chatRoom -> chatRoom.getRoomId().equals(roomId)).toList().get(0);
-            formerChatRoom.removeMember(clientId);
+            chatRoomsMap.put(newRoomId, newChatRoom);
+            System.out.println("*************Create chat room ****************** former = " + roomId);
+//            ChatRoom formerChatRoom = m.entrySet().stream().filter((key) -> key.getValue().getRoomId().equals(roomId)).collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
+            ChatRoom formerChatRoom = null;
+            for (String key : chatRoomsMap.keySet()) {
+                if (chatRoomsMap.get(key).getRoomId().equals(roomId)) {
+                    formerChatRoom = chatRoomsMap.get(key);
+                    break;
+                }
+            }
+
+            formerChatRoom.removeMember(clientId, roomId);
             roomIdsArray[1] = newRoomId;
             roomId = newRoomId;
+            chatRoomsMap.forEach((key, value)->{
+                System.out.println(key);
+                System.out.println(value.getMembers());
+            });
             return roomIdsArray;
         }
         return roomIdsArray;
@@ -123,17 +154,37 @@ public class Client implements Runnable {
         String joiningRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
         boolean isJoiningRoomIdExist = false;
-        for (ChatRoom chatRoom : chatRoomsList) {
-            if (chatRoom.getRoomId().equals(joiningRoomId)) isJoiningRoomIdExist = true;
-            if (chatRoom.getOwner().equals(clientId)) return roomIdsArray;
+        for (String key : chatRoomsMap.keySet()) {
+            if (chatRoomsMap.get(key).getRoomId().equals(joiningRoomId)) isJoiningRoomIdExist = true;
+            if (chatRoomsMap.get(key).getOwner().equals(clientId)) return roomIdsArray;
         }
         if (isJoiningRoomIdExist) {
-            ChatRoom formerChatRoom = chatRoomsList.stream().filter(chatRoom -> chatRoom.getRoomId().equals(roomId)).toList().get(0);
-            formerChatRoom.removeMember(clientId);
-            ChatRoom newChatRoom = chatRoomsList.stream().filter(chatRoom -> chatRoom.getRoomId().equals(joiningRoomId)).toList().get(0);
-            newChatRoom.addMember(clientId);
+            System.out.println("*************Join chat room ******************" + roomId + " " + joiningRoomId);
+
+            ChatRoom formerChatRoom = null;
+            for (String key : chatRoomsMap.keySet()) {
+                if (chatRoomsMap.get(key).getRoomId().equals(roomId)) {
+                    formerChatRoom = chatRoomsMap.get(key);
+                    break;
+                }
+            }
+
+            formerChatRoom.removeMember(clientId, roomId);
+
+            ChatRoom newChatRoom = null;
+            for (String key : chatRoomsMap.keySet()) {
+                if (chatRoomsMap.get(key).getRoomId().equals(joiningRoomId)) {
+                    newChatRoom = chatRoomsMap.get(key);
+                    break;
+                }
+            }
+            newChatRoom.addMember(clientId, joiningRoomId);
             roomIdsArray[1] = joiningRoomId;
             roomId = joiningRoomId;
+//            m.forEach((key,value)->{
+//                System.out.println(key);
+//                System.out.println(value.getMembers());
+//            });
             return roomIdsArray;
         }
         return roomIdsArray;
