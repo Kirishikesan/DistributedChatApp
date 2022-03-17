@@ -21,21 +21,16 @@ public class Client implements Runnable {
 
     private BufferedReader bufferedReader;
     private PrintWriter writer;
-    public ConcurrentHashMap<String, ChatRoom> chatRoomsMap;
     public String clientId;
     private String roomId;
-    private ArrayList<Client> clients;
 
     public Client() {
     }
 
-    public Client(Socket clientSocket, ArrayList<Client> clients, ConcurrentHashMap<String, ChatRoom> chatRoomsMap) throws IOException {
+    public Client(Socket clientSocket) throws IOException {
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         writer = new PrintWriter(clientSocket.getOutputStream(), true);
-        this.chatRoomsMap = chatRoomsMap;
-
-        this.clients = clients;
-        roomId = chatRoomsMap.get(chatRoomsMap.keySet().toArray()[0]).getRoomId();
+        roomId = Server.chatRoomsMap.get(Server.chatRoomsMap.keySet().toArray()[0]).getRoomId();
     }
 
     @Override
@@ -54,8 +49,8 @@ public class Client implements Runnable {
 //                adding users
                 if (client_obj.get("type").equals("newidentity")) {
                     clientId = (String) client_obj.get("identity");
-                    ChatRoom mainHall = chatRoomsMap.get(chatRoomsMap.keySet().toArray()[0]);
-                    mainHall.addMember(this, roomId);
+                    ChatRoom mainHall = Server.chatRoomsMap.get(Server.chatRoomsMap.keySet().toArray()[0]);
+                    mainHall.addMember(this);
                     writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
 
 //                creating rooms
@@ -66,9 +61,9 @@ public class Client implements Runnable {
                     writer.println(createRoomResJsonObj);
                     if (isRoomCreateSuccess) {
                         ChatRoom formerChatRoom = null;
-                        for (String key : chatRoomsMap.keySet()) {
-                            if (chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
-                                formerChatRoom = chatRoomsMap.get(key);
+                        for (String key : Server.chatRoomsMap.keySet()) {
+                            if (Server.chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
+                                formerChatRoom = Server.chatRoomsMap.get(key);
                                 break;
                             }
                         }
@@ -76,13 +71,13 @@ public class Client implements Runnable {
                         ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
                         writer.println(roomChangeResJsonObj);
                         notifyingClients.forEach((key, client) -> {
-                           if (!key.equals("default")) client.writer.println(roomChangeResJsonObj);
+                            if (!key.equals("default")) client.writer.println(roomChangeResJsonObj);
                         });
                     }
 
 //                    listing all rooms
                 } else if (client_obj.get("type").equals("list")) {
-                    JSONObject listRoomsResJsonObj = ClientResponse.listChatRoomsResponse(chatRoomsMap);
+                    JSONObject listRoomsResJsonObj = ClientResponse.listChatRoomsResponse(Server.chatRoomsMap);
                     writer.println(listRoomsResJsonObj);
 
                 } else if (client_obj.get("type").equals("joinroom")) {
@@ -90,29 +85,27 @@ public class Client implements Runnable {
                     JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, roomIdsArray[0], roomIdsArray[1]);
 
                     if (!Objects.equals(roomIdsArray[0], roomIdsArray[1])) {
-                        ChatRoom formerChatRoom = null;
-                        for (String key : chatRoomsMap.keySet()) {
-                            if (chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
-                                formerChatRoom = chatRoomsMap.get(key);
+                        for (String key : Server.chatRoomsMap.keySet()) {
+                            if (Server.chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
+                                Server.chatRoomsMap.get(key).getMembers().forEach((former_key, client) -> {
+                                    if (!former_key.equals("default")) client.writer.println(listRoomsResJsonObj);
+                                });
                                 break;
                             }
                         }
-                        ChatRoom newChatRoom = null;
-                        for (String key : chatRoomsMap.keySet()) {
-                            if (chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[1])) {
-                                newChatRoom = chatRoomsMap.get(key);
+
+                        for (String key : Server.chatRoomsMap.keySet()) {
+                            if (Server.chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[1])) {
+                                Server.chatRoomsMap.get(key).getMembers().forEach((new_key, client) -> {
+                                    if (!new_key.equals("default")) client.writer.println(listRoomsResJsonObj);
+                                });
                                 break;
                             }
                         }
-                        ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
-                        notifyingClients.putAll(newChatRoom.getMembers());
-                        notifyingClients.forEach((key, client) -> {
-                            if (!key.equals("default")) client.writer.println(listRoomsResJsonObj);
-                        });
+
                     } else {
                         writer.println(listRoomsResJsonObj);
                     }
-
                 }
             } catch (IOException | ParseException e) {
                 e.printStackTrace();
@@ -124,29 +117,22 @@ public class Client implements Runnable {
         String newRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
         if (createChatRoomValidation(newRoomId)) {
-            for (String key : chatRoomsMap.keySet()) {
-                if (chatRoomsMap.get(key).getRoomId().equals(newRoomId) || chatRoomsMap.get(key).getOwner().equals(clientId)) {
+            for (String key : Server.chatRoomsMap.keySet()) {
+                if (Server.chatRoomsMap.get(key).getRoomId().equals(newRoomId) || Server.chatRoomsMap.get(key).getOwner().equals(clientId)) {
                     return roomIdsArray;
                 }
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
-            chatRoomsMap.put(newRoomId, newChatRoom);
-            System.out.println("*************Create chat room ****************** former = " + roomId);
-            ChatRoom formerChatRoom = null;
-            for (String key : chatRoomsMap.keySet()) {
-                if (chatRoomsMap.get(key).getRoomId().equals(roomId)) {
-                    formerChatRoom = chatRoomsMap.get(key);
+            Server.chatRoomsMap.put(newRoomId, newChatRoom);
+
+            for (String key : Server.chatRoomsMap.keySet()) {
+                if (Server.chatRoomsMap.get(key).getRoomId().equals(roomId)) {
+                    Server.chatRoomsMap.get(key).removeMember(this);
                     break;
                 }
             }
-
-            formerChatRoom.removeMember(this, roomId);
             roomIdsArray[1] = newRoomId;
             roomId = newRoomId;
-//            chatRoomsMap.forEach((key, value) -> {
-//                System.out.println(key);
-//                System.out.println(value.getMembers());
-//            });
             return roomIdsArray;
         }
         return roomIdsArray;
@@ -156,33 +142,33 @@ public class Client implements Runnable {
         String joiningRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
         boolean isJoiningRoomIdExist = false;
-        for (String key : chatRoomsMap.keySet()) {
-            if (chatRoomsMap.get(key).getRoomId().equals(joiningRoomId)) isJoiningRoomIdExist = true;
-            if (chatRoomsMap.get(key).getOwner().equals(clientId)) return roomIdsArray;
+        for (String key : Server.chatRoomsMap.keySet()) {
+            if (Server.chatRoomsMap.get(key).getRoomId().equals(joiningRoomId)) isJoiningRoomIdExist = true;
+            if (Server.chatRoomsMap.get(key).getOwner().equals(clientId)) return roomIdsArray;
         }
         if (isJoiningRoomIdExist) {
-            System.out.println("*************Join chat room ******************" + roomId + " " + joiningRoomId);
 
-            ChatRoom formerChatRoom = null;
-            for (String key : chatRoomsMap.keySet()) {
-                if (chatRoomsMap.get(key).getRoomId().equals(roomId)) {
-                    formerChatRoom = chatRoomsMap.get(key);
+            for (String key : Server.chatRoomsMap.keySet()) {
+                if (Server.chatRoomsMap.get(key).getRoomId().equals(roomId)) {
+                    Server.chatRoomsMap.get(key).removeMember(this);
                     break;
                 }
             }
 
-            formerChatRoom.removeMember(this, roomId);
-
-            ChatRoom newChatRoom = null;
-            for (String key : chatRoomsMap.keySet()) {
-                if (chatRoomsMap.get(key).getRoomId().equals(joiningRoomId)) {
-                    newChatRoom = chatRoomsMap.get(key);
+            for (String key : Server.chatRoomsMap.keySet()) {
+                if (Server.chatRoomsMap.get(key).getRoomId().equals(joiningRoomId)) {
+                    Server.chatRoomsMap.get(key).addMember(this);
                     break;
                 }
             }
-            newChatRoom.addMember(this, joiningRoomId);
             roomIdsArray[1] = joiningRoomId;
             roomId = joiningRoomId;
+//            Server.chatRoomsMap.forEach((key, value) -> {
+//                System.out.println(key);
+//                value.getMembers().forEach((key1,value1)->{
+//                    System.out.println(value1.clientId);
+//                });
+//            });
             return roomIdsArray;
         }
         return roomIdsArray;
