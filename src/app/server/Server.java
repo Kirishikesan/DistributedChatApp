@@ -58,7 +58,7 @@ public class Server implements Runnable {
     }
 
     ChatRoom create_chat_room(String roomId) {
-        return new ChatRoom(roomId, "");
+        return new ChatRoom(roomId, null);
     }
 
     public String getserverId() {
