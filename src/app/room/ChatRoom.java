@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatRoom {
     private final String roomid;
     private final String owner;
-    public ConcurrentHashMap<String, Client> members = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<String, Client> members;
 
     public ChatRoom(String roomId, Client owner) {
         this.roomid = roomId;
@@ -18,15 +18,15 @@ public class ChatRoom {
         } else {
             this.owner = owner.clientId;
         }
-
+        members = new ConcurrentHashMap<>();
         members.put(this.owner, owner);
     }
 
-    public void addMember(Client client, String roomId) {
+    public void addMember(Client client) {
         members.put(client.clientId, client);
     }
 
-    public void removeMember(Client client, String roomId) {
+    public void removeMember(Client client) {
         members.remove(client.clientId);
     }
 

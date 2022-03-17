@@ -17,7 +17,7 @@ public class Server implements Runnable {
     private int clients_port;
     private int coordination_port;
 
-    ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
     private static final ArrayList<Client> client_threads = new ArrayList<>();
@@ -47,7 +47,7 @@ public class Server implements Runnable {
             try {
                 clientSocket = serverSocket.accept();
                 System.out.println("Connection Established!");
-                Client client = new Client(clientSocket, client_threads, chatRoomsMap);
+                Client client = new Client(clientSocket);
                 client_threads.add(client);
                 client_threadPool.execute(client);
             } catch (Exception e) {
