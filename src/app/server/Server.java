@@ -48,7 +48,7 @@ public class Server implements Runnable {
                 System.out.println("Connection Established!");
 
                 Client client = new Client(clientSocket);
-                Thread client_thread = new Thread(client);
+                Thread client_thread = new Thread(client, "thread-" + serverId);
                 client_thread.start();
 
                 client.setClientThreadId(client_thread.getId());

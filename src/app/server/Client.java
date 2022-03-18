@@ -142,16 +142,16 @@ public class Client implements Runnable {
                     String[] roomIdsArray = quit(client_obj);
                     boolean isQuitSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
 
-//                    if(isQuitSuccess){
-//
-//                        //close connection
-////                        clientSocket.close();
-//                    }
+                    if(isQuitSuccess){
+
+                        //close connection
+                        clientSocket.close();
+                    }
 
                 }
 
-            } catch (IOException | ParseException e) {
-                System.out.println("client - " + e);
+            } catch (Exception e) {
+//                System.out.println("client - " + e);
             }
         }
     }
@@ -316,15 +316,14 @@ public class Client implements Runnable {
 
             }
 
-            // notify
+
+            // notify former room
             JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, quitRoomIdsArray[0], "");
             ConcurrentHashMap<String, Client> notifyClients = Server.chatRoomsMap.get(quitRoomIdsArray[0]).getMembers();
-            System.out.println(notifyClients.keySet());
 
             notifyClients.forEach((former_key, client) -> {
                 if (!former_key.equals("default")) client.writer.println(listRoomsResJsonObj);
             });
-
 
             //update local server
             ChatRoom quitChatRoom = Server.chatRoomsMap.get(roomId);
@@ -332,7 +331,6 @@ public class Client implements Runnable {
             Server.removeClientSocket(this.clientThreadId);
 
             // TO Do - update global server
-
 
 
             quitRoomIdsArray[1] = "";
