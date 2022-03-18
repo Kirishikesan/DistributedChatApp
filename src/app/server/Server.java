@@ -20,7 +20,9 @@ public class Server implements Runnable {
     public static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
-    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
+
+//    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<Long, Thread> client_threads = new ConcurrentHashMap<>();
 
     public Server(String serverId, String server_address, int clients_port, int coordination_port) {
         this.serverId = serverId;
@@ -52,7 +54,8 @@ public class Server implements Runnable {
                 client_thread.start();
 
                 client.setClientThreadId(client_thread.getId());
-                client_threads.put(client_thread.getId() , client);
+                client_threads.put(client_thread.getId() , client_thread);
+
 
             } catch (Exception e) {
                 System.out.println("server" + e);
@@ -70,7 +73,12 @@ public class Server implements Runnable {
     }
 
     public static void removeClientSocket (Long clientThreadId){
+        System.out.println("clientSocket thread stop");
+
+        Thread client_thread = client_threads.get(clientThreadId);
         client_threads.remove(clientThreadId);
+        client_thread.stop();
+
     }
 
 

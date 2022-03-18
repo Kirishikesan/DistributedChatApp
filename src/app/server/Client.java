@@ -45,7 +45,7 @@ public class Client implements Runnable {
     }
 
     @Override
-    public void run() throws NullPointerException{
+    public void run(){
         System.out.println("clientSocket thread started");
         String msg = null;
         JSONObject client_obj = null;
@@ -139,7 +139,7 @@ public class Client implements Runnable {
                         }
                     }
                 }else if (client_obj.get("type").equals("quit")) {
-                    String[] roomIdsArray = quit(client_obj);
+                    String[] roomIdsArray = quit();
                     boolean isQuitSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
 
                     if(isQuitSuccess){
@@ -151,7 +151,7 @@ public class Client implements Runnable {
                 }
 
             } catch (Exception e) {
-//                System.out.println("client - " + e);
+                System.out.println("client - " + e);
             }
         }
     }
@@ -230,6 +230,7 @@ public class Client implements Runnable {
 
     private String[] deleteRoomId(JSONObject client_obj) {
         String deleteRoomId = (String) client_obj.get("roomid");
+
         String[] roomIdsArray = {roomId, roomId};
         boolean isDeleteRoomIdExist = false;
         boolean isDeleteRoomOwnerExist = false;
@@ -291,7 +292,15 @@ public class Client implements Runnable {
         return roomIdsArray;
     }
 
-    private String[] quit(JSONObject client_obj) throws ParseException {
+    private String[] forcedeleteRoomId(String roomId) {
+        JSONObject client_obj = new JSONObject();
+        client_obj.put("type", "deleteroom");
+        client_obj.put("roomid", roomId);
+
+        return deleteRoomId(client_obj);
+    }
+
+    private String[] quit(){
 
         String[] quitRoomIdsArray = {roomId, roomId};
 
@@ -303,10 +312,12 @@ public class Client implements Runnable {
             if (Server.chatRoomsMap.get(key).getOwner().equals(clientId)) isQuitRoomOwnerExist = true;
         }
 
+        System.out.println("cl - " + this.clientId + " " + roomId);
+
         if (isQuitRoomIdExist) {
 
             if (isQuitRoomOwnerExist) {
-                String[] deleteRoomIdsArray = deleteRoomId(client_obj);
+                String[] deleteRoomIdsArray = forcedeleteRoomId(quitRoomIdsArray[0]);
 
                 boolean isRoomDeleteSuccess = !Objects.equals(deleteRoomIdsArray[0], deleteRoomIdsArray[1]);
                 JSONObject listRoomsResJsonObj = ClientResponse.deleteChatRoomResponse(deleteRoomIdsArray[0], String.valueOf(isRoomDeleteSuccess));
@@ -314,6 +325,8 @@ public class Client implements Runnable {
 
                 // TO Do - notify servers
 
+                quitRoomIdsArray[0] = deleteRoomIdsArray[1];
+                quitRoomIdsArray[1] = deleteRoomIdsArray[1];
             }
 
 
