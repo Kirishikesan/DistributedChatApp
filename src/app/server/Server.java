@@ -3,6 +3,7 @@ package app.server;
 import app.room.ChatRoom;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,8 +36,10 @@ public class Server {
     public void start() {
 
         try {
-            serverClientSocket = new ServerSocket(clients_port);
-            serverCoordinationSocket = new ServerSocket(coordination_port);
+            serverClientSocket = new ServerSocket();
+            serverClientSocket.bind(new InetSocketAddress(server_address, clients_port));
+            serverCoordinationSocket = new ServerSocket();
+            serverCoordinationSocket.bind(new InetSocketAddress(server_address, coordination_port));
         } catch (IOException e) {
             e.printStackTrace();
         }
