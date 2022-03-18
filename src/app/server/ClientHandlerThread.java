@@ -13,10 +13,9 @@ import app.response.ClientResponse;
 import app.room.ChatRoom;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 
-public class Client implements Runnable {
+public class ClientHandlerThread implements Runnable {
 
     private BufferedReader bufferedReader;
     private PrintWriter writer;
@@ -25,10 +24,10 @@ public class Client implements Runnable {
     private Socket clientSocket;
     private Long clientThreadId;
 
-    public Client() {
+    public ClientHandlerThread() {
     }
 
-    public Client(Socket clientSocket) throws IOException {
+    public ClientHandlerThread(Socket clientSocket) throws IOException {
         this.clientSocket = clientSocket;
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         writer = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -83,10 +82,10 @@ public class Client implements Runnable {
                             }
                         }
                         JSONObject roomChangeResJsonObj = ClientResponse.changeChatRoomResponse(clientId, formerChatRoom.getRoomId(), (String) client_obj.get("roomid"));
-                        ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
+                        ConcurrentHashMap<String, ClientHandlerThread> notifyingClients = formerChatRoom.getMembers();
                         writer.println(roomChangeResJsonObj);
-                        notifyingClients.forEach((key, client) -> {
-                            if (!key.equals("default")) client.writer.println(roomChangeResJsonObj);
+                        notifyingClients.forEach((key, clientHandlerThread) -> {
+                            if (!key.equals("default")) clientHandlerThread.writer.println(roomChangeResJsonObj);
                         });
                     }
 
@@ -102,8 +101,8 @@ public class Client implements Runnable {
                     if (!Objects.equals(roomIdsArray[0], roomIdsArray[1])) {
                         for (String key : Server.chatRoomsMap.keySet()) {
                             if (Server.chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[0])) {
-                                Server.chatRoomsMap.get(key).getMembers().forEach((former_key, client) -> {
-                                    if (!former_key.equals("default")) client.writer.println(listRoomsResJsonObj);
+                                Server.chatRoomsMap.get(key).getMembers().forEach((former_key, clientHandlerThread) -> {
+                                    if (!former_key.equals("default")) clientHandlerThread.writer.println(listRoomsResJsonObj);
                                 });
                                 break;
                             }
@@ -111,8 +110,8 @@ public class Client implements Runnable {
 
                         for (String key : Server.chatRoomsMap.keySet()) {
                             if (Server.chatRoomsMap.get(key).getRoomId().equals(roomIdsArray[1])) {
-                                Server.chatRoomsMap.get(key).getMembers().forEach((new_key, client) -> {
-                                    if (!new_key.equals("default")) client.writer.println(listRoomsResJsonObj);
+                                Server.chatRoomsMap.get(key).getMembers().forEach((new_key, clientHandlerThread) -> {
+                                    if (!new_key.equals("default")) clientHandlerThread.writer.println(listRoomsResJsonObj);
                                 });
                                 break;
                             }
@@ -136,8 +135,8 @@ public class Client implements Runnable {
 
                     for (String key : Server.chatRoomsMap.keySet()) {
                         if (Server.chatRoomsMap.get(key).getRoomId().equals(roomId)) {
-                            Server.chatRoomsMap.get(key).getMembers().forEach((new_key, client) -> {
-                                if (!new_key.equals("default") && !client.clientId.equals(clientId)) client.writer.println(messageChatRoomsJsonObj);
+                            Server.chatRoomsMap.get(key).getMembers().forEach((new_key, clientHandlerThread) -> {
+                                if (!new_key.equals("default") && !clientHandlerThread.clientId.equals(clientId)) clientHandlerThread.writer.println(messageChatRoomsJsonObj);
                             });
                             break;
                         }
@@ -249,18 +248,18 @@ public class Client implements Runnable {
             String mainHallRoomId = (String) Server.chatRoomsMap.keySet().toArray()[0];
             ChatRoom mainHall = Server.chatRoomsMap.get(mainHallRoomId);
 
-            ConcurrentHashMap<String, Client> notifyingClients = formerChatRoom.getMembers();
+            ConcurrentHashMap<String, ClientHandlerThread> notifyingClients = formerChatRoom.getMembers();
 
             String[] moveRoomIdsArray = moveAll(formerChatRoom, mainHall);
             boolean isClientsMoveSuccess = !Objects.equals(moveRoomIdsArray[0], moveRoomIdsArray[1]);
 
             if (isClientsMoveSuccess) {
                 //notify all about move
-                notifyingClients.forEach((notifyClient_key, notifyClient) -> {
-                    notifyingClients.forEach((formerClient_key, formerClient) -> {
+                notifyingClients.forEach((notifyClient_key, notifyClientHandlerThread) -> {
+                    notifyingClients.forEach((formerClient_key, formerClientHandlerThread) -> {
                         if (!formerClient_key.equals("default")){
                             JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(formerClient_key, moveRoomIdsArray[0], moveRoomIdsArray[1]);
-                            if (!notifyClient_key.equals("default")) notifyClient.writer.println(listRoomsResJsonObj);
+                            if (!notifyClient_key.equals("default")) notifyClientHandlerThread.writer.println(listRoomsResJsonObj);
                         }
                     });
                 });
@@ -287,7 +286,7 @@ public class Client implements Runnable {
     private String[] moveAll(ChatRoom formerChatRoom, ChatRoom mainHall) {
         String[] roomIdsArray = {roomId, roomId};
 
-        ConcurrentHashMap<String, Client> formerChatRoomClients = formerChatRoom.getMembers();
+        ConcurrentHashMap<String, ClientHandlerThread> formerChatRoomClients = formerChatRoom.getMembers();
         mainHall.addMembers(formerChatRoomClients);
 
         roomIdsArray[1] = mainHall.getRoomId();
@@ -342,10 +341,10 @@ public class Client implements Runnable {
 
             // notify former room
             JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, quitRoomIdsArray[0], "");
-            ConcurrentHashMap<String, Client> notifyClients = Server.chatRoomsMap.get(quitRoomIdsArray[0]).getMembers();
+            ConcurrentHashMap<String, ClientHandlerThread> notifyClients = Server.chatRoomsMap.get(quitRoomIdsArray[0]).getMembers();
 
-            notifyClients.forEach((former_key, client) -> {
-                if (!former_key.equals("default")) client.writer.println(listRoomsResJsonObj);
+            notifyClients.forEach((former_key, clientHandlerThread) -> {
+                if (!former_key.equals("default")) clientHandlerThread.writer.println(listRoomsResJsonObj);
             });
 
             //update local server
