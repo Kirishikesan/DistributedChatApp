@@ -44,6 +44,10 @@ public class Client implements Runnable {
         return clientId;
     }
 
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
+    }
+
     @Override
     public void run(){
         System.out.println("clientSocket thread started");
@@ -288,6 +292,12 @@ public class Client implements Runnable {
 
         roomIdsArray[1] = mainHall.getRoomId();
         roomId = mainHall.getRoomId();
+
+        formerChatRoomClients.forEach((formerClient_key, formerClient) -> {
+            if (!formerClient_key.equals("default")){
+                formerClient.setRoomId(mainHall.getRoomId());
+            }
+        });
 
         return roomIdsArray;
     }
