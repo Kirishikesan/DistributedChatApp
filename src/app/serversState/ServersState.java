@@ -1,6 +1,5 @@
 package app.serversState;
 
-import app.server.Client;
 import app.server.Server;
 
 import java.io.File;
@@ -10,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServersState {
     private static ServersState serversStateInstance;
-    private final ConcurrentHashMap<Long, Server> serverThreads = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Server> serversMap = new ConcurrentHashMap<>();
 
     private ServersState() {
     }
@@ -35,9 +34,8 @@ public class ServersState {
                 String[] server_config = data.split(" ");
                 if (server_config[0].equals(serverId)) {
                     Server server = new Server(server_config[0], server_config[1], Integer.parseInt(server_config[2]), Integer.parseInt(server_config[3]));
-                    Thread serverThread = new Thread(server);
-                    serverThreads.put(serverThread.getId(), server);
-                    serverThread.start();
+                    server.start();
+                    serversMap.put(server_config[0], server);
                 }
             }
         } catch (FileNotFoundException e) {
