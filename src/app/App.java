@@ -29,7 +29,7 @@ public class App {
                 String data = myReader.nextLine();
                 String[] server_config = data.split(" ");
                 if (server_config[0].equals(serverId)) {
-                    Server server = new Server("s1", "localhost", 4444, 5555);
+                    Server server = new Server(server_config[0], server_config[1], Integer.parseInt(server_config[2]), Integer.parseInt(server_config[3]));
                     server_threads.add(server);
                     server_threadPool.execute(server);
                 }

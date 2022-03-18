@@ -12,16 +12,15 @@ import java.util.concurrent.Executors;
 
 public class Server implements Runnable {
 
-    private String serverId;
+    private final String serverId;
     private String server_address;
-    private int clients_port;
-    private int coordination_port;
+    private final int clients_port;
+    private final int coordination_port;
 
     public static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
     public static ServerSocket serverSocket;
-    private static final ArrayList<Client> client_threads = new ArrayList<>();
-    private static final Executor client_threadPool = Executors.newFixedThreadPool(4);
+    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
 
     public Server(String serverId, String server_address, int clients_port, int coordination_port) {
         this.serverId = serverId;
@@ -47,11 +46,16 @@ public class Server implements Runnable {
             try {
                 clientSocket = serverSocket.accept();
                 System.out.println("Connection Established!");
+
                 Client client = new Client(clientSocket);
-                client_threads.add(client);
-                client_threadPool.execute(client);
+                Thread client_thread = new Thread(client);
+                client_thread.start();
+
+                client.setClientThreadId(client_thread.getId());
+                client_threads.put(client_thread.getId() , client);
+
             } catch (Exception e) {
-                System.out.println(e);
+                System.out.println("server" + e);
             }
         }
 
@@ -63,6 +67,10 @@ public class Server implements Runnable {
 
     public String getserverId() {
         return serverId;
+    }
+
+    public static void removeClientSocket (Long clientThreadId){
+        client_threads.remove(clientThreadId);
     }
 
 

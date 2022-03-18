@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,18 +22,30 @@ public class Client implements Runnable {
     private PrintWriter writer;
     public String clientId;
     private String roomId;
+    private Socket clientSocket;
+    private Long clientThreadId;
 
     public Client() {
     }
 
     public Client(Socket clientSocket) throws IOException {
+        this.clientSocket = clientSocket;
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         writer = new PrintWriter(clientSocket.getOutputStream(), true);
         roomId = Server.chatRoomsMap.get(Server.chatRoomsMap.keySet().toArray()[0]).getRoomId();
+
+    }
+
+    public void setClientThreadId(Long clientThreadId) {
+        this.clientThreadId = clientThreadId;
+    }
+
+    public String getClientId() {
+        return clientId;
     }
 
     @Override
-    public void run() {
+    public void run() throws NullPointerException{
         System.out.println("clientSocket thread started");
         String msg = null;
         JSONObject client_obj = null;
@@ -127,11 +138,20 @@ public class Client implements Runnable {
                             break;
                         }
                     }
+                }else if (client_obj.get("type").equals("quit")) {
+                    String[] roomIdsArray = quit(client_obj);
+                    boolean isQuitSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
 
+//                    if(isQuitSuccess){
+//
+//                        //close connection
+////                        clientSocket.close();
+//                    }
 
                 }
+
             } catch (IOException | ParseException e) {
-                e.printStackTrace();
+                System.out.println("client - " + e);
             }
         }
     }
@@ -244,8 +264,8 @@ public class Client implements Runnable {
                 Server.chatRoomsMap.remove(deleteRoomId);
 
                 //notify all about delete
-                roomIdsArray[1] = mainHall.getRoomId();;
-                roomId = mainHall.getRoomId();;
+                roomIdsArray[1] = mainHall.getRoomId();
+                roomId = mainHall.getRoomId();
             }
 
 //            Server.chatRoomsMap.forEach((key, value) -> {
@@ -269,5 +289,56 @@ public class Client implements Runnable {
         roomId = mainHall.getRoomId();
 
         return roomIdsArray;
+    }
+
+    private String[] quit(JSONObject client_obj) throws ParseException {
+
+        String[] quitRoomIdsArray = {roomId, roomId};
+
+        boolean isQuitRoomIdExist = false;
+        boolean isQuitRoomOwnerExist = false;
+
+        for (String key : Server.chatRoomsMap.keySet()) {
+            if (Server.chatRoomsMap.get(key).getRoomId().equals(roomId)) isQuitRoomIdExist = true;
+            if (Server.chatRoomsMap.get(key).getOwner().equals(clientId)) isQuitRoomOwnerExist = true;
+        }
+
+        if (isQuitRoomIdExist) {
+
+            if (isQuitRoomOwnerExist) {
+                String[] deleteRoomIdsArray = deleteRoomId(client_obj);
+
+                boolean isRoomDeleteSuccess = !Objects.equals(deleteRoomIdsArray[0], deleteRoomIdsArray[1]);
+                JSONObject listRoomsResJsonObj = ClientResponse.deleteChatRoomResponse(deleteRoomIdsArray[0], String.valueOf(isRoomDeleteSuccess));
+                this.writer.println(listRoomsResJsonObj);
+
+                // TO Do - notify servers
+
+            }
+
+            // notify
+            JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, quitRoomIdsArray[0], "");
+            ConcurrentHashMap<String, Client> notifyClients = Server.chatRoomsMap.get(quitRoomIdsArray[0]).getMembers();
+            System.out.println(notifyClients.keySet());
+
+            notifyClients.forEach((former_key, client) -> {
+                if (!former_key.equals("default")) client.writer.println(listRoomsResJsonObj);
+            });
+
+
+            //update local server
+            ChatRoom quitChatRoom = Server.chatRoomsMap.get(roomId);
+            quitChatRoom.removeMember(this);
+            Server.removeClientSocket(this.clientThreadId);
+
+            // TO Do - update global server
+
+
+
+            quitRoomIdsArray[1] = "";
+            roomId = "";
+        }
+
+        return quitRoomIdsArray;
     }
 }
