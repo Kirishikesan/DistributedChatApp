@@ -5,12 +5,9 @@ import app.room.ChatRoom;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
-public class Server implements Runnable {
+public class Server {
 
     private final String serverId;
     private String server_address;
@@ -19,9 +16,11 @@ public class Server implements Runnable {
 
     public static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
-    public static ServerSocket serverSocket;
+    public static ServerSocket serverClientSocket;
+    public static ServerSocket serverCoordinationSocket;
 
-//    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
+
+    //    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<Long, Thread> client_threads = new ConcurrentHashMap<>();
 
     public Server(String serverId, String server_address, int clients_port, int coordination_port) {
@@ -29,32 +28,35 @@ public class Server implements Runnable {
         this.server_address = server_address;
         this.clients_port = clients_port;
         this.coordination_port = coordination_port;
-        ChatRoom default_chatRoom = create_chat_room("MainHall-" + serverId);
-        chatRoomsMap.put("MainHall-" + serverId,default_chatRoom);
+        ChatRoom default_chatRoom = create_default_chat_room("MainHall-" + serverId);
+        chatRoomsMap.put("MainHall-" + serverId, default_chatRoom);
     }
 
-    @Override
-    public void run() {
+    public void start() {
 
         try {
-            serverSocket = new ServerSocket(clients_port);
+            serverClientSocket = new ServerSocket(clients_port);
+            serverCoordinationSocket = new ServerSocket(coordination_port);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        ServerHandlerThread serverHandlerThread = new ServerHandlerThread(serverCoordinationSocket);
+        Thread serverCoordinationThread = new Thread(serverHandlerThread);
+        serverCoordinationThread.start();
 
         System.out.println("Server-" + serverId + " Listening!");
 
         while (true) {
             try {
-                clientSocket = serverSocket.accept();
+                clientSocket = serverClientSocket.accept();
                 System.out.println("Connection Established!");
 
-                Client client = new Client(clientSocket);
-                Thread client_thread = new Thread(client, "thread-" + serverId);
+                ClientHandlerThread clientHandlerThread = new ClientHandlerThread(clientSocket);
+                Thread client_thread = new Thread(clientHandlerThread, "thread-" + serverId);
                 client_thread.start();
 
-                client.setClientThreadId(client_thread.getId());
-                client_threads.put(client_thread.getId() , client_thread);
+                clientHandlerThread.setClientThreadId(client_thread.getId());
+                client_threads.put(client_thread.getId(), client_thread);
 
 
             } catch (Exception e) {
@@ -64,7 +66,7 @@ public class Server implements Runnable {
 
     }
 
-    ChatRoom create_chat_room(String roomId) {
+    ChatRoom create_default_chat_room(String roomId) {
         return new ChatRoom(roomId, null);
     }
 
@@ -72,7 +74,7 @@ public class Server implements Runnable {
         return serverId;
     }
 
-    public static void removeClientSocket (Long clientThreadId){
+    public static void removeClientSocket(Long clientThreadId) {
         System.out.println("clientSocket thread stop");
 
         Thread client_thread = client_threads.get(clientThreadId);
