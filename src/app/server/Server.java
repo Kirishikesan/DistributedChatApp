@@ -8,12 +8,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Server {
+public class Server implements Runnable{
 
-    private final String serverId;
+    private final int serverId;
     private String server_address;
     private final int clients_port;
     private final int coordination_port;
+
 
     public static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
@@ -24,7 +25,7 @@ public class Server {
     //    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<Long, Thread> client_threads = new ConcurrentHashMap<>();
 
-    public Server(String serverId, String server_address, int clients_port, int coordination_port) {
+    public Server(int serverId, String server_address, int clients_port, int coordination_port) {
         this.serverId = serverId;
         this.server_address = server_address;
         this.clients_port = clients_port;
@@ -33,7 +34,20 @@ public class Server {
         chatRoomsMap.put("MainHall-" + serverId, default_chatRoom);
     }
 
-    public void start() {
+    public int getserverId() {
+        return serverId;
+    }
+
+
+    public String getServerAddress() {
+        return server_address;
+    }
+
+    public int getCoordinationPort() {
+        return coordination_port;
+    }
+
+    public void run() {
 
         try {
             serverClientSocket = new ServerSocket();
@@ -71,10 +85,6 @@ public class Server {
 
     ChatRoom create_default_chat_room(String roomId) {
         return new ChatRoom(roomId, null);
-    }
-
-    public String getserverId() {
-        return serverId;
     }
 
     public static void removeClientSocket(Long clientThreadId) {
