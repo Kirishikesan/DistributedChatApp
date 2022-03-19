@@ -1,5 +1,7 @@
 package app.server;
 
+import app.election.FastBullyAlgorithm;
+import app.room.ChatRoom;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -29,7 +31,10 @@ public class ServerHandlerThread implements Runnable{
                 String msg = bufferedReader.readLine();
                 JSONObject server_obj = (JSONObject) new JSONParser().parse(msg);
 
-                System.out.println(server_obj);
+                // fast bully algorithm - respond to incoming request
+                if (server_obj.containsKey("request")) {
+                    FastBullyAlgorithm.handleRequest(server_obj);
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();

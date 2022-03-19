@@ -10,7 +10,15 @@ public class ServerResponse {
 
     public static JSONObject createElectionRequest(int identity) {
         JSONObject responseObj = new JSONObject();
-        responseObj.put("option", "election");
+        responseObj.put("request", "election");
+        responseObj.put("identity", identity);
+
+        return responseObj;
+    }
+
+    public static JSONObject createAnswerRequest(int identity) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("request", "answer");
         responseObj.put("identity", identity);
 
         return responseObj;
