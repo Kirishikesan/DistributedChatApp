@@ -27,9 +27,9 @@ public class ServerHandlerThread implements Runnable{
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
                 PrintWriter writer = new PrintWriter(serverSocket.getOutputStream(), true);
                 String msg = bufferedReader.readLine();
-                JSONObject client_obj = (JSONObject) new JSONParser().parse(msg);
+                JSONObject server_obj = (JSONObject) new JSONParser().parse(msg);
 
-
+                System.out.println(server_obj);
 
             } catch (IOException e) {
                 e.printStackTrace();

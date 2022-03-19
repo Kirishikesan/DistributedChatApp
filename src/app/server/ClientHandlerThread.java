@@ -321,7 +321,7 @@ public class ClientHandlerThread implements Runnable {
             if (Server.chatRoomsMap.get(key).getOwner().equals(clientId)) isQuitRoomOwnerExist = true;
         }
 
-        System.out.println("cl - " + this.clientId + " " + roomId);
+//        System.out.println("cl - " + this.clientId + " " + roomId);
 
         if (isQuitRoomIdExist) {
 
