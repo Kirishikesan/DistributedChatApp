@@ -60,4 +60,44 @@ public class ServerResponse {
         return responseObj;
     }
 
+    public static JSONObject informServersNewIdentity(String serverID, String identity, String updatedID){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "gossipNewIdentity");
+        responseObj.put("serverID", serverID);
+        responseObj.put("identity", identity);
+        responseObj.put("updatedID", updatedID);
+
+        return responseObj;
+    }
+
+    public static JSONObject informServersDeleteIdentity(String serverID, String identity, String updatedID){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "gossipDeleteIdentity");
+        responseObj.put("serverID", serverID);
+        responseObj.put("identity", identity);
+        responseObj.put("updatedID", updatedID);
+
+        return responseObj;
+    }
+
+    public static JSONObject informServersNewChatroom(String serverID, String roomID, String updatedID){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "gossipNewRoomID");
+        responseObj.put("serverID", serverID);
+        responseObj.put("roomID", roomID);
+        responseObj.put("updatedID", updatedID);
+
+        return responseObj;
+    }
+
+    public static JSONObject informServersDeleteChatRoom(String serverID, String roomID, String updatedID){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "gossipDeleteRoom");
+        responseObj.put("serverID", serverID);
+        responseObj.put("roomID", roomID);
+        responseObj.put("updatedID", updatedID);
+
+        return responseObj;
+    }
+
 }
