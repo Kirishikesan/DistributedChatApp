@@ -1,5 +1,6 @@
 package app.response;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
@@ -36,6 +37,17 @@ public class ServerResponse {
         JSONObject responseObj = new JSONObject();
         responseObj.put("request", "coordination");
         responseObj.put("identity", identity);
+
+        return responseObj;
+    }
+
+    public static JSONObject getLocalUpdatesRequest(int identity, JSONArray clients, JSONArray chatRooms) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "leaderstateupdate");
+        responseObj.put("identity", identity);
+        responseObj.put("clients", clients);
+        responseObj.put("chatrooms", chatRooms);
+
 
         return responseObj;
     }
