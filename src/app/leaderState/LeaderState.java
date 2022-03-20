@@ -56,7 +56,7 @@ public class LeaderState {
     }
 
     public boolean isElectedLeader() {
-        System.out.println(FastBullyAlgorithm.isLeader + " " + isLeader());
+//        System.out.println(FastBullyAlgorithm.isLeader + " " + isLeader());
         return FastBullyAlgorithm.isLeader && isLeader();
     }
 

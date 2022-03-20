@@ -9,6 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerResponse {
 
+    public static JSONObject createHeartbeatRequest(int identity) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("request", "heartbeat");
+        responseObj.put("identity", identity);
+
+        return responseObj;
+    }
+
     public static JSONObject createElectionRequest(int identity) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("request", "election");
