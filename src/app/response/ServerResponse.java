@@ -24,4 +24,20 @@ public class ServerResponse {
         return responseObj;
     }
 
+    public static JSONObject createNominationRequest(int identity) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("request", "nomination");
+        responseObj.put("identity", identity);
+
+        return responseObj;
+    }
+
+    public static JSONObject createCoordinationRequest(int identity) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("request", "coordination");
+        responseObj.put("identity", identity);
+
+        return responseObj;
+    }
+
 }
