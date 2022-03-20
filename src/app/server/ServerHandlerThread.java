@@ -1,6 +1,8 @@
 package app.server;
 
 import app.election.FastBullyAlgorithm;
+import app.leaderState.LeaderState;
+import app.response.ClientResponse;
 import app.room.ChatRoom;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,6 +36,16 @@ public class ServerHandlerThread implements Runnable{
                 // fast bully algorithm - respond to incoming request
                 if (server_obj.containsKey("request")) {
                     FastBullyAlgorithm.handleRequest(server_obj);
+
+                } else if (server_obj.containsKey("type")) {
+
+                    // update leader state - if self server is the elected leader
+                    if (server_obj.get("type").equals("leaderstateupdate")) {
+                        if (LeaderState.getInstance().isElectedLeader()){
+                            System.out.println(server_obj);
+                        }
+
+                    }
                 }
 
             } catch (IOException e) {

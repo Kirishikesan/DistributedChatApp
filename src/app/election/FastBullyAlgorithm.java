@@ -1,13 +1,14 @@
 package app.election;
 
 import app.leaderState.LeaderState;
-import app.response.ClientResponse;
 import app.response.ServerResponse;
 import app.server.Server;
 import app.server.ServerMessage;
 import app.serversState.ServersState;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +30,7 @@ public class FastBullyAlgorithm implements Runnable{
     static volatile boolean nominationStatus = false;
     static volatile boolean coordinatorStatus = false;
 
-    public static volatile boolean leaderUpdateComplete = false;
+    public static volatile boolean isLeader = false;
 
     static volatile int highestPriorityServerId = -1;
 
@@ -63,7 +64,7 @@ public class FastBullyAlgorithm implements Runnable{
 
                     }else{
                         //  2.3 If no answer within T2
-                        setUpSelfLeader();
+                        setUpSelfAsLeader();
                     }
 
 
@@ -148,6 +149,12 @@ public class FastBullyAlgorithm implements Runnable{
     public static void sendElection(){
         System.out.println("INFO : start election");
 
+        answerStatus = false;
+        nominationStatus = false;
+        coordinatorStatus = false;
+
+        isLeader = false;
+
         AtomicInteger failedRequestCount = new AtomicInteger();
         int selfServerId = ServersState.getInstance().getSelfServerId();
         ConcurrentHashMap<Integer, Server> serversMap = ServersState.getInstance().getServersMap();
@@ -157,7 +164,7 @@ public class FastBullyAlgorithm implements Runnable{
             if(serverKey > selfServerId){
                 try {
                     JSONObject createElectionReqObj = ServerResponse.createElectionRequest(selfServerId);
-                    ServerMessage.sendServer(createElectionReqObj, destinationServer);
+                    ServerMessage.sendToServer(createElectionReqObj, destinationServer);
 
                 }catch(Exception e){
                     System.out.println("WARN : Server s"+destinationServer.getserverId() + " has failed, cannot send election request");
@@ -179,7 +186,7 @@ public class FastBullyAlgorithm implements Runnable{
             int selfServerId = ServersState.getInstance().getSelfServerId();
 
             JSONObject createElectionReqObj = ServerResponse.createAnswerRequest(selfServerId);
-            ServerMessage.sendServer(createElectionReqObj, destinationServer);
+            ServerMessage.sendToServer(createElectionReqObj, destinationServer);
             System.out.println("INFO : Server s"+ selfServerId +" has sent answer message to s" + sourceServerId);
 
         }catch(Exception e){
@@ -195,7 +202,7 @@ public class FastBullyAlgorithm implements Runnable{
             int selfServerId = ServersState.getInstance().getSelfServerId();
 
             JSONObject createNominationReqObj = ServerResponse.createNominationRequest(selfServerId);
-            ServerMessage.sendServer(createNominationReqObj, nominatedServer);
+            ServerMessage.sendToServer(createNominationReqObj, nominatedServer);
             System.out.println("INFO : Server s"+ selfServerId +" has sent nomination message to s" + highestPriorityServerId);
 
         }catch(Exception e){
@@ -218,7 +225,7 @@ public class FastBullyAlgorithm implements Runnable{
             if(serverKey < selfServerId){
                 try {
                     JSONObject createCoordinationReqObj = ServerResponse.createCoordinationRequest(selfServerId);
-                    ServerMessage.sendServer(createCoordinationReqObj, destinationServer);
+                    ServerMessage.sendToServer(createCoordinationReqObj, destinationServer);
                     System.out.println("INFO : Server s"+ selfServerId +" has sent coordinator message to s" + destinationServer.getserverId());
 
                 }catch(Exception e){
@@ -269,13 +276,16 @@ public class FastBullyAlgorithm implements Runnable{
 
     }
 
-    public static void setUpSelfLeader(){
+    public static void setUpSelfAsLeader(){
 
         LeaderState.getInstance().setLeaderId( ServersState.getInstance().getSelfServerId() );
+        isLeader = true;
 
         //  2.3.2 Pi stops its election procedure
         //  3.4.2 Pj stops its election procedure - coordinatorStatus->true in leader
         electionStatus = false;
+        answerStatus = false;
+        nominationStatus = false;
         coordinatorStatus = true;
 
         System.out.println( "INFO : Server s" + LeaderState.getInstance().getLeaderId() + " is set as leader " );
@@ -285,6 +295,7 @@ public class FastBullyAlgorithm implements Runnable{
         Runnable procedure = new FastBullyAlgorithm("coordination" );
         new Thread( procedure ).start();
     }
+
 
     public static void handleRequest(JSONObject requestObject){
         String request = (String) requestObject.get( "request" );
@@ -326,16 +337,48 @@ public class FastBullyAlgorithm implements Runnable{
             case "nomination":
 
                 //  3.4 If a process Pj(i<j) receives the nomination message from Pi
-                setUpSelfLeader();
+                setUpSelfAsLeader();
                 break;
 
 
             case "coordination":
-                coordinatorStatus = true;
-                System.out.println( "INFO : Receive coordination message & Server s" + Integer.parseInt(requestObject.get( "identity" ).toString()) + " is Admit as leader " );
+                setUpCoordinatorAsLeader(requestObject);
                 break;
 
         }
+    }
+
+    public static void setUpCoordinatorAsLeader(JSONObject requestObject){
+
+        int selfServerId = ServersState.getInstance().getSelfServerId();
+        int electedLeaderId = Integer.parseInt(requestObject.get( "identity" ).toString());
+
+        LeaderState.getInstance().setLeaderId( electedLeaderId );
+
+        //  2.3.2 Pi stops its election procedure
+        //  3.4.2 Pj stops its election procedure - coordinatorStatus->true in leader
+        electionStatus = false;
+        answerStatus = false;
+        nominationStatus = false;
+        coordinatorStatus = true;
+
+
+        LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
+        System.out.println( "INFO : Receive coordination message & Server s" + electedLeaderId + " is Admit as leader " );
+
+        // send local clients and chat rooms to leader
+        JSONArray clientsArray = ServersState.getInstance().getClientList();
+        JSONArray chatRoomsArray = ServersState.getInstance().getChatRoomList();
+
+        try {
+            JSONObject localUpdatesReqObj = ServerResponse.getLocalUpdatesRequest(selfServerId, clientsArray, chatRoomsArray);
+            ServerMessage.sendToLeader(localUpdatesReqObj);
+            System.out.println("INFO : Server s"+ selfServerId +" has sent local updates to s" + electedLeaderId);
+
+        } catch (IOException e) {
+            System.out.println("WARN : Server s"+ selfServerId +" has fail to send local updates to s" + electedLeaderId);
+        }
+
     }
 
 }

@@ -1,6 +1,7 @@
 package app.server;
 
 import app.room.ChatRoom;
+import app.serversState.ServersState;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -16,7 +17,7 @@ public class Server implements Runnable{
     private final int coordination_port;
 
 
-    public static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
+//    private static ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     public static Socket clientSocket;
     public static ServerSocket serverClientSocket;
     public static ServerSocket serverCoordinationSocket;
@@ -30,8 +31,7 @@ public class Server implements Runnable{
         this.server_address = server_address;
         this.clients_port = clients_port;
         this.coordination_port = coordination_port;
-        ChatRoom default_chatRoom = create_default_chat_room("MainHall-" + serverId);
-        chatRoomsMap.put("MainHall-" + serverId, default_chatRoom);
+
     }
 
     public int getserverId() {
@@ -83,7 +83,7 @@ public class Server implements Runnable{
 
     }
 
-    ChatRoom create_default_chat_room(String roomId) {
+    public ChatRoom create_default_chat_room(String roomId) {
         return new ChatRoom(roomId, null);
     }
 
