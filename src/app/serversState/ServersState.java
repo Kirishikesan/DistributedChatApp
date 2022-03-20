@@ -1,6 +1,5 @@
 package app.serversState;
 
-import app.election.FastBullyAlgorithm;
 import app.server.Server;
 
 import java.io.File;
