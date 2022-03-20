@@ -13,5 +13,7 @@ public class App {
 
         FastBullyAlgorithm.initializeLeader();
 
+        Runnable heartbeat = new FastBullyAlgorithm("heartbeat");
+        new Thread(heartbeat).start();
     }
 }

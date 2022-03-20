@@ -18,7 +18,7 @@ public class FastBullyAlgorithm implements Runnable{
 
     String operation;
 
-    final int t1 = 15000; // threshold for respond from coordinator
+    final int t1 = 10000; // threshold for respond from coordinator
     final int t2 = 20000; // threshold for respond from candidates - answer messages
     final int t3 = 35000; // threshold for respond from win candidate - coordinator messages
     final int t4 = 30000; // threshold for respond from either a nomination or a coordinator
@@ -52,21 +52,22 @@ public class FastBullyAlgorithm implements Runnable{
     public void run() {
         switch (operation){
             case "heartbeat":
-                //
+                heartbeat();
+
             case "wait_answer":                     //T2
                 try {
                     Thread.sleep( t2 );
 
-                    if(answerStatus){
+                    if(!coordinatorStatus){
+                        if(answerStatus){
+                            //  2.4 If the answer messages are received within T2
+                            setUpNominator();
 
-                        //  2.4 If the answer messages are received within T2
-                        setUpNominator();
-
-                    }else{
-                        //  2.3 If no answer within T2
-                        setUpSelfAsLeader();
+                        }else{
+                            //  2.3 If no answer within T2
+                            setUpSelfAsLeader();
+                        }
                     }
-
 
                 } catch (InterruptedException e) {
                     System.out.println( "INFO : Exception in wait_answer thread" );
@@ -146,6 +147,38 @@ public class FastBullyAlgorithm implements Runnable{
         }
     }
 
+    public void heartbeat(){
+
+        while (true){
+            try {
+                Thread.sleep(10);
+
+                int leaderId = LeaderState.getInstance().getLeaderId();
+                int selfServerId = ServersState.getInstance().getSelfServerId();
+                boolean isNotLeader = selfServerId != leaderId;
+
+                if(coordinatorStatus && isNotLeader){
+                    Thread.sleep(t1);
+                    ConcurrentHashMap<Integer, Server> serversMap = ServersState.getInstance().getServersMap();
+                    Server destinationServer = serversMap.get(leaderId);
+
+                    JSONObject createHeartbeatReqObj = ServerResponse.createHeartbeatRequest(selfServerId);
+                    ServerMessage.sendToServer(createHeartbeatReqObj, destinationServer);
+                }
+
+            } catch (Exception e) {
+
+                coordinatorStatus = false;
+                System.out.println("WARN : Leader s"+ LeaderState.getInstance().getLeaderId() + " has failed");
+
+                Runnable procedure = new FastBullyAlgorithm("election");
+                new Thread(procedure).start();
+
+            }
+        }
+
+    }
+
     public static void sendElection(){
         System.out.println("INFO : start election");
 
@@ -154,6 +187,7 @@ public class FastBullyAlgorithm implements Runnable{
         coordinatorStatus = false;
 
         isLeader = false;
+        highestPriorityServerId = -1;
 
         AtomicInteger failedRequestCount = new AtomicInteger();
         int selfServerId = ServersState.getInstance().getSelfServerId();
@@ -302,6 +336,8 @@ public class FastBullyAlgorithm implements Runnable{
 
         switch (request) {
             case "heartbeat":
+                int senderId = Integer.parseInt(requestObject.get( "identity" ).toString());
+                System.out.println( "INFO : Heartbeat received from s" + senderId );
                 break;
 
             case "election":    // 3 If a process Pj(i<j) receives an election message from Pi

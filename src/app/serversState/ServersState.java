@@ -62,7 +62,7 @@ public class ServersState {
                     Thread serverThread = new Thread(server);
                     serverThread.start();
                 }
-                System.out.println(Arrays.toString(chatRoomsMap.keySet().toArray()));
+//                System.out.println(Arrays.toString(chatRoomsMap.keySet().toArray()));
 
             }
 
