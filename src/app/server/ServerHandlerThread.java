@@ -4,6 +4,7 @@ import app.election.FastBullyAlgorithm;
 import app.leaderState.LeaderState;
 import app.response.ClientResponse;
 import app.room.ChatRoom;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -14,6 +15,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ServerHandlerThread implements Runnable{
 
@@ -42,7 +47,7 @@ public class ServerHandlerThread implements Runnable{
                     // update leader state - if self server is the elected leader
                     if (server_obj.get("type").equals("leaderstateupdate")) {
                         if (LeaderState.getInstance().isElectedLeader()){
-                            System.out.println(server_obj);
+                            updateLeaderState(server_obj);
                         }
 
                     }
@@ -54,6 +59,25 @@ public class ServerHandlerThread implements Runnable{
                 e.printStackTrace();
             }
         }
+    }
+
+    private void updateLeaderState(JSONObject server_obj) throws ParseException {
+
+        int senderId = Integer.parseInt(server_obj.get( "identity" ).toString());
+        LeaderState.getInstance().setActiveViews(senderId);
+
+        List<String> clients = new ArrayList<String>(Arrays.asList(server_obj.get( "clients" ).toString()));
+
+        JSONArray chatroomsJSON = (JSONArray) new JSONParser().parse(server_obj.get( "chatrooms" ).toString());
+        List<JSONObject> chatrooms = (List<JSONObject>) chatroomsJSON.stream().map(roomObject -> (JSONObject)roomObject).collect(Collectors.toList());
+
+        LeaderState.getInstance().addClients(clients);
+        LeaderState.getInstance().addChatRooms(chatrooms);
+
+        System.out.println("Sent local updated from s" + senderId);
+        System.out.println( Arrays.toString(LeaderState.getInstance().getActiveClientsList().toArray()) );
+        System.out.println( Arrays.toString(LeaderState.getInstance().getActiveChatRooms().toArray()) );
+        System.out.println( Arrays.toString(LeaderState.getInstance().getActiveViews().toArray()) );
     }
 
 

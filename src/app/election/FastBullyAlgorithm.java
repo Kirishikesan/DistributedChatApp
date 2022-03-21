@@ -7,11 +7,14 @@ import app.server.ServerMessage;
 import app.serversState.ServersState;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 
 public class FastBullyAlgorithm implements Runnable{
@@ -400,6 +403,22 @@ public class FastBullyAlgorithm implements Runnable{
 
         Runnable procedure = new FastBullyAlgorithm("coordination" );
         new Thread( procedure ).start();
+
+        JSONArray clientsArray = ServersState.getInstance().getClientList();
+        JSONArray chatRoomsArray = ServersState.getInstance().getChatRoomList();
+        try {
+            List<String> clients = new ArrayList<String>(Arrays.asList(clientsArray.toString()));
+            JSONArray chatroomsJSON = (JSONArray) new JSONParser().parse(chatRoomsArray.toString());
+
+            List<JSONObject> chatrooms = (List<JSONObject>) chatroomsJSON.stream().map(roomObject -> (JSONObject)roomObject).collect(Collectors.toList());
+
+            LeaderState.getInstance().addClients(clients);
+            LeaderState.getInstance().addChatRooms(chatrooms);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
