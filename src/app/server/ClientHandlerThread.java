@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import app.leaderState.LeaderState;
@@ -17,6 +18,8 @@ import app.serversState.ServersState;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import static app.server.ServerMessage.sendToLeader;
+
 
 public class ClientHandlerThread implements Runnable {
 
@@ -26,6 +29,7 @@ public class ClientHandlerThread implements Runnable {
     private String roomId;
     private Socket clientSocket;
     private Long clientThreadId;
+    private int serverid = Server.getserverId();
 
     public ClientHandlerThread() {
     }
@@ -66,9 +70,18 @@ public class ClientHandlerThread implements Runnable {
 //                adding users
                 if (client_obj.get("type").equals("newidentity")) {
                     clientId = (String) client_obj.get("identity");
-                    ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
-                    mainHall.addMember(this);
-                    writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                    int leaderId = LeaderState.getLeaderId();
+                    if(leaderId == serverid){ // if this is the leader
+                        if(Server.addClient(clientId)){ // client doesnt  exist
+                            ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
+                            mainHall.addMember(this);
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                        }else{ // client already exist
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                        }
+                    } else{
+                        sendToLeader(client_obj);
+                    }
 
 //                creating rooms
                 } else if (client_obj.get("type").equals("createroom")) {
@@ -160,20 +173,18 @@ public class ClientHandlerThread implements Runnable {
                 System.out.println("client - " + e);
             }
         }
-    } 
+    }
+
+
 
     private String[] createChatRoom(JSONObject client_obj) throws IOException{
         String newRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
         if (createChatRoomValidation(newRoomId)) {
-        	if(LeaderState.getInstance().getLeaderId()==ServersState.getInstance().getSelfServerId()) {
-	            for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
-	                if (activeChatRoom.get("chatRoomId").equals(newRoomId) || activeChatRoom.get("ownerId").equals(clientId)) {
-	                    return roomIdsArray;
-	                }
-	            }
-            }else{
-            	ServerMessage.sendToLeader(ServerResponse.createChatRoom(ServersState.getInstance().getSelfServerId(), newRoomId));
+            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
+                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(newRoomId) || ServersState.getInstance().getChatRoomsMap().get(key).getOwner().equals(clientId)) {
+                    return roomIdsArray;
+                }
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
             ServersState.getInstance().getChatRoomsMap().put(newRoomId, newChatRoom);

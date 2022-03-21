@@ -15,11 +15,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LeaderState {
     private static LeaderState leaderStateInstance;
 
-    private int leaderId;
+    private static int leaderId;
+//    private static final ConcurrentHashMap<String, ClientHandlerThread> activeClientsList = new ConcurrentHashMap<>();
+//    private final ConcurrentHashMap<String, ChatRoom> activeChatRooms = new ConcurrentHashMap<>();
 
     private final Set<Integer> activeViews = Collections.synchronizedSet(new HashSet<>());
 
-    private final Set<String> activeClientsList = Collections.synchronizedSet(new HashSet<>());
+    public static void setActiveClientsList(Set<String> activeClientsList) {
+        LeaderState.activeClientsList = activeClientsList;
+    }
+
+    private static Set<String> activeClientsList = Collections.synchronizedSet(new HashSet<>());
     private final Set<JSONObject> activeChatRooms = Collections.synchronizedSet(new HashSet<>());
 
 
@@ -43,37 +49,22 @@ public class LeaderState {
         return leaderStateInstance;
     }
 
+    public static Set<String> getActiveClientsList() {
+        return activeClientsList;
+    }
 
-    public int getLeaderId() {
+
+
+    public Set<JSONObject> getActiveChatRooms() {
+        return activeChatRooms;
+    }
+
+    public static int getLeaderId() {
         return leaderId;
     }
 
     public void setLeaderId(int leaderId) {
         this.leaderId = leaderId;
-    }
-
-    public void setActiveViews(int serverId) {
-        activeViews.add(serverId);
-    }
-
-    public void addClients(List<String> clients) {
-        activeClientsList.addAll(clients);
-    }
-
-    public void addChatRooms(List<JSONObject> chatRoom) {
-        activeChatRooms.addAll(chatRoom);
-    }
-
-    public Set<Integer> getActiveViews() {
-        return activeViews;
-    }
-
-    public Set<String> getActiveClientsList() {
-        return activeClientsList;
-    }
-
-    public Set<JSONObject> getActiveChatRooms() {
-        return activeChatRooms;
     }
 
     public void resetLeader() {

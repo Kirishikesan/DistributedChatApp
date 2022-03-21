@@ -49,7 +49,15 @@ public class ServerHandlerThread implements Runnable{
                         if (LeaderState.getInstance().isElectedLeader()){
                             updateLeaderState(server_obj);
                         }
-
+                    }
+                    else if(server_obj.get("type").equals("newidentity")){
+                        String clientId = (String)server_obj.get("identity");
+                        if(Server.addClient(clientId)){
+                            // add client to the server sent the req
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                        } else{
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                        }
                     }
                 }
 

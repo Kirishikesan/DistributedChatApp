@@ -1,5 +1,6 @@
 package app.server;
 
+import app.leaderState.LeaderState;
 import app.room.ChatRoom;
 import app.serversState.ServersState;
 
@@ -7,11 +8,12 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server implements Runnable{
 
-    private final int serverId;
+    private static int serverId;
     private String server_address;
     private final int clients_port;
     private final int coordination_port;
@@ -34,7 +36,7 @@ public class Server implements Runnable{
 
     }
 
-    public int getserverId() {
+    public static int getserverId() {
         return serverId;
     }
 
@@ -81,6 +83,17 @@ public class Server implements Runnable{
             }
         }
 
+    }
+
+    public static boolean addClient(String clientId){
+        Set<String> activeClients = LeaderState.getActiveClientsList();
+        if(activeClients.contains(clientId)){ // client already exist
+            return false;
+        }else{
+            activeClients.add(clientId);
+            LeaderState.setActiveClientsList(activeClients);
+            return true;
+        }
     }
 
     public ChatRoom create_default_chat_room(String roomId) {
