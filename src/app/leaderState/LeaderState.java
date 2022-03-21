@@ -42,10 +42,7 @@ public class LeaderState {
         }
         return leaderStateInstance;
     }
-    
-    public ConcurrentHashMap<String,ChatRoom> getActiveChatRooms(){
-    	return activeChatRooms;
-    }
+
 
     public int getLeaderId() {
         return leaderId;
