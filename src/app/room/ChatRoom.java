@@ -1,32 +1,37 @@
 package app.room;
 
+import app.server.ClientHandlerThread;
+
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatRoom {
     private final String roomid;
     private final String owner;
-    private CopyOnWriteArrayList<String> members = new CopyOnWriteArrayList<String>();
+    public ConcurrentHashMap<String, ClientHandlerThread> members;
 
-    public ChatRoom(String roomId, String owner) {
+    public ChatRoom(String roomId, ClientHandlerThread owner) {
         this.roomid = roomId;
-        this.owner = owner;
-        members.add(owner);
-        System.out.println("Create chatroom " + roomId);
+        if (Objects.isNull(owner)) {
+            this.owner = "default";
+            owner = new ClientHandlerThread();
+        } else {
+            this.owner = owner.clientId;
+        }
+        members = new ConcurrentHashMap<>();
+        members.put(this.owner, owner);
     }
 
-    public void addMember(String clientId) {
-        members.add(clientId);
+    public void addMember(ClientHandlerThread clientHandlerThread) {
+        members.put(clientHandlerThread.clientId, clientHandlerThread);
     }
 
-    public void removeMember(String clientId) {
-        List<String> remainingClients= new ArrayList<>();
-        List<Object> iter = Arrays.asList(members.toArray());
-        iter.forEach(member->{
-            if(!(Objects.equals((String) member, clientId)))remainingClients.add((String) member);
-        });
-        members.clear();
-        members.addAll(remainingClients);
+    public void addMembers(ConcurrentHashMap<String, ClientHandlerThread> clients) {
+        members.putAll(clients);
+    }
+
+    public void removeMember(ClientHandlerThread clientHandlerThread) {
+        members.remove(clientHandlerThread.clientId);
     }
 
     public String getRoomId() {
@@ -37,7 +42,7 @@ public class ChatRoom {
         return owner;
     }
 
-    public CopyOnWriteArrayList<String> getMembers() {
+    public ConcurrentHashMap<String, ClientHandlerThread> getMembers() {
         return members;
     }
 }

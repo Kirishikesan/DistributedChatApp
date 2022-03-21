@@ -5,7 +5,7 @@ import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientResponse {
 
@@ -32,9 +32,9 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject listChatRoomsResponse(CopyOnWriteArrayList<ChatRoom> chatRoomList) {
+    public static JSONObject listChatRoomsResponse(ConcurrentHashMap<String, ChatRoom> m) {
         List<String> chatRoomsList = new ArrayList<>();
-        chatRoomList.forEach(chatRoom -> chatRoomsList.add(chatRoom.getRoomId()));
+        m.forEach((key,chatRoom) -> chatRoomsList.add(chatRoom.getRoomId()));
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "roomlist");
         responseObj.put("rooms", chatRoomsList);
@@ -49,6 +49,27 @@ public class ClientResponse {
         responseObj.put("identity", clientId);
         responseObj.put("former", formerRoomId);
         responseObj.put("roomid", joiningRoomId);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject deleteChatRoomResponse(String joiningRoomId, String approved) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "deleteroom");
+        responseObj.put("roomid", joiningRoomId);
+        responseObj.put("approved", approved);
+
+        return responseObj;
+    }
+      
+    @SuppressWarnings("unchecked")
+    public static JSONObject messageChatRoom(String clientId, String content) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "message");
+        responseObj.put("identity", clientId);
+        responseObj.put("content", content);
+
 
         return responseObj;
     }
