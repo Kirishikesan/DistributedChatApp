@@ -167,8 +167,8 @@ public class ClientHandlerThread implements Runnable {
         String[] roomIdsArray = {roomId, roomId};
         if (createChatRoomValidation(newRoomId)) {
         	if(LeaderState.getInstance().getLeaderId()==ServersState.getInstance().getSelfServerId()) {
-	            for (String key : LeaderState.getInstance().getActiveChatRooms().keySet()) {
-	                if (LeaderState.getInstance().getActiveChatRooms().get(key).getRoomId().equals(newRoomId) || LeaderState.getInstance().getActiveChatRooms().get(key).getOwner().equals(clientId)) {
+	            for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
+	                if (activeChatRoom.get("chatRoomId").equals(newRoomId) || activeChatRoom.get("ownerId").equals(clientId)) {
 	                    return roomIdsArray;
 	                }
 	            }
