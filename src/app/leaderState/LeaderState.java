@@ -4,9 +4,11 @@ import app.election.FastBullyAlgorithm;
 import app.room.ChatRoom;
 import app.server.ClientHandlerThread;
 import app.serversState.ServersState;
+import org.json.simple.JSONObject;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,17 +16,21 @@ public class LeaderState {
     private static LeaderState leaderStateInstance;
 
     private int leaderId;
-    private final Set<Integer> views_temp = new HashSet<Integer>();
-    private final Set<Integer> activeViews = Collections.synchronizedSet(views_temp);
-    private final ConcurrentHashMap<String, ClientHandlerThread> activeClientsList = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, ChatRoom> activeChatRooms = new ConcurrentHashMap<>();
+
+    private final Set<Integer> activeViews = Collections.synchronizedSet(new HashSet<>());
+
+    private final Set<String> activeClientsList = Collections.synchronizedSet(new HashSet<>());
+    private final Set<JSONObject> activeChatRooms = Collections.synchronizedSet(new HashSet<>());
+
 
     private LeaderState() {
     }
 
+
     public static LeaderState getLeaderStateInstance() {
         return leaderStateInstance;
     }
+
 
     public static LeaderState getInstance() {
         if (leaderStateInstance == null) {
@@ -53,22 +59,30 @@ public class LeaderState {
         activeViews.add(serverId);
     }
 
+    public void addClients(List<String> clients) {
+        activeClientsList.addAll(clients);
+    }
+
+    public void addChatRooms(List<JSONObject> chatRoom) {
+        activeChatRooms.addAll(chatRoom);
+    }
+
     public Set<Integer> getActiveViews() {
         return activeViews;
+    }
+
+    public Set<String> getActiveClientsList() {
+        return activeClientsList;
+    }
+
+    public Set<JSONObject> getActiveChatRooms() {
+        return activeChatRooms;
     }
 
     public void resetLeader() {
         activeViews.clear();
         activeClientsList.clear();
         activeChatRooms.clear();
-    }
-
-    public void addClient(ClientHandlerThread client) {
-        activeClientsList.put(client.getClientId(), client);
-    }
-
-    public void addRoom(ChatRoom chatRoom) {
-        activeChatRooms.put(chatRoom.getRoomId(), chatRoom);
     }
 
     public boolean isLeader() {
