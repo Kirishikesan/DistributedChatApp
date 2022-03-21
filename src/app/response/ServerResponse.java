@@ -49,6 +49,14 @@ public class ServerResponse {
         return responseObj;
     }
 
+    public static JSONObject createIamUpRequest(int identity) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("request", "iamup");
+        responseObj.put("identity", identity);
+
+        return responseObj;
+    }
+
     public static JSONObject getLocalUpdatesRequest(int identity, JSONArray clients, JSONArray chatRooms) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "leaderstateupdate");

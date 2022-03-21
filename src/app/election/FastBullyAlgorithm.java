@@ -27,6 +27,7 @@ public class FastBullyAlgorithm implements Runnable{
 
     static volatile boolean electionStatus = false;
     static volatile boolean answerStatus = false;
+    static volatile boolean viewStatus = false;
     static volatile boolean nominationStatus = false;
     static volatile boolean coordinatorStatus = false;
 
@@ -72,7 +73,27 @@ public class FastBullyAlgorithm implements Runnable{
                 } catch (InterruptedException e) {
                     System.out.println( "INFO : Exception in wait_answer thread" );
                 }
+                break;
 
+
+            case "wait_view":                     //T2
+                try {
+                    Thread.sleep( t2 );
+
+                    if(!coordinatorStatus){
+                        if(viewStatus){
+                            //  0.4 If the view messages are received within T2
+//                            setUpNominator();
+
+                        }else{
+                            //  0.3 If no view messages within T2, Pi stops the procedure. // Pi is the coordinator
+                            setUpSelfAsLeader();
+                        }
+                    }
+
+                } catch (InterruptedException e) {
+                    System.out.println( "INFO : Exception in wait_answer thread" );
+                }
                 break;
 
             case "wait_coordination":    //T3
@@ -144,6 +165,15 @@ public class FastBullyAlgorithm implements Runnable{
                     System.out.println( "WARN : fail to send coordination message" );
                 }
                 break;
+
+            case "iamup":
+                try {
+                    sendIamUp();
+                } catch( Exception e ) {
+                    System.out.println( "WARN : fail to send IamUp message" );
+                }
+                break;
+
         }
     }
 
@@ -183,6 +213,7 @@ public class FastBullyAlgorithm implements Runnable{
         System.out.println("INFO : start election");
 
         answerStatus = false;
+        viewStatus = false;
         nominationStatus = false;
         coordinatorStatus = false;
 
@@ -273,6 +304,41 @@ public class FastBullyAlgorithm implements Runnable{
     }
 
 
+    public static void sendIamUp(){
+        System.out.println("INFO : Iam Up");
+
+        answerStatus = false;
+        viewStatus = false;
+        nominationStatus = false;
+        coordinatorStatus = false;
+
+        isLeader = false;
+        highestPriorityServerId = -1;
+
+        AtomicInteger failedRequestCount = new AtomicInteger();
+        int selfServerId = ServersState.getInstance().getSelfServerId();
+        ConcurrentHashMap<Integer, Server> serversMap = ServersState.getInstance().getServersMap();
+
+        //  0.1 Pi sends an IamUp message to every process
+        serversMap.forEach((serverKey, destinationServer) -> {
+            if(serverKey != selfServerId){
+                try {
+                    JSONObject createIamUpReqObj = ServerResponse.createIamUpRequest(selfServerId);
+                    ServerMessage.sendToServer(createIamUpReqObj, destinationServer);
+
+                }catch(Exception e){
+                    System.out.println("WARN : Server s"+ destinationServer.getserverId() + " has failed, cannot send IamUp request");
+                    failedRequestCount.getAndIncrement();
+                }
+            }
+        });
+
+        //  0.2 Pi waits for view messages for the interval T2
+        Runnable procedure = new FastBullyAlgorithm("wait_view");
+        new Thread(procedure).start();
+
+    }
+
 
     public static void setUpNominator(){
 
@@ -312,19 +378,25 @@ public class FastBullyAlgorithm implements Runnable{
 
     public static void setUpSelfAsLeader(){
 
-        LeaderState.getInstance().setLeaderId( ServersState.getInstance().getSelfServerId() );
+        int selfServerId = ServersState.getInstance().getSelfServerId();
+        LeaderState.getInstance().setLeaderId( selfServerId );
+
+        LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
+
+        LeaderState.getInstance().setActiveViews(selfServerId);
+
         isLeader = true;
 
         //  2.3.2 Pi stops its election procedure
         //  3.4.2 Pj stops its election procedure - coordinatorStatus->true in leader
         electionStatus = false;
         answerStatus = false;
+        viewStatus = false;
         nominationStatus = false;
         coordinatorStatus = true;
 
         System.out.println( "INFO : Server s" + LeaderState.getInstance().getLeaderId() + " is set as leader " );
 
-        LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
 
         Runnable procedure = new FastBullyAlgorithm("coordination" );
         new Thread( procedure ).start();
@@ -400,6 +472,9 @@ public class FastBullyAlgorithm implements Runnable{
 
 
         LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
+        LeaderState.getInstance().setActiveViews(selfServerId);
+        LeaderState.getInstance().setActiveViews(electedLeaderId);
+
         System.out.println( "INFO : Receive coordination message & Server s" + electedLeaderId + " is Admit as leader " );
 
         // send local clients and chat rooms to leader
