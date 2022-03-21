@@ -9,7 +9,9 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import app.leaderState.LeaderState;
 import app.response.ClientResponse;
+import app.response.ServerResponse;
 import app.room.ChatRoom;
 import app.serversState.ServersState;
 import org.json.simple.JSONObject;
@@ -158,16 +160,20 @@ public class ClientHandlerThread implements Runnable {
                 System.out.println("client - " + e);
             }
         }
-    }
+    } 
 
-    private String[] createChatRoom(JSONObject client_obj) {
+    private String[] createChatRoom(JSONObject client_obj) throws IOException{
         String newRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
         if (createChatRoomValidation(newRoomId)) {
-            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(newRoomId) || ServersState.getInstance().getChatRoomsMap().get(key).getOwner().equals(clientId)) {
-                    return roomIdsArray;
-                }
+        	if(LeaderState.getInstance().getLeaderId()==ServersState.getInstance().getSelfServerId()) {
+	            for (String key : LeaderState.getInstance().getActiveChatRooms().keySet()) {
+	                if (LeaderState.getInstance().getActiveChatRooms().get(key).getRoomId().equals(newRoomId) || LeaderState.getInstance().getActiveChatRooms().get(key).getOwner().equals(clientId)) {
+	                    return roomIdsArray;
+	                }
+	            }
+            }else{
+            	ServerMessage.sendToLeader(ServerResponse.createChatRoom(ServersState.getInstance().getSelfServerId(), newRoomId));
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
             ServersState.getInstance().getChatRoomsMap().put(newRoomId, newChatRoom);

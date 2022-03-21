@@ -59,5 +59,14 @@ public class ServerResponse {
 
         return responseObj;
     }
+    
+    public static JSONObject createChatRoom(int identity, String roomId) {
+    	JSONObject responseObj = new JSONObject();
+    	responseObj.put("type","createRoom");
+    	responseObj.put("identity", identity);
+    	responseObj.put("roomId",roomId);
+    	
+    	return responseObj;
+    }
 
 }

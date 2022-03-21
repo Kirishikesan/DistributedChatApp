@@ -1,4 +1,3 @@
 module distributedChatApp {
-    requires json.simple;
-
+	requires json.simple;
 }
