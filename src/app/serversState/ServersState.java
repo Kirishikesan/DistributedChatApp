@@ -7,10 +7,7 @@ import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServersState {
@@ -19,6 +16,7 @@ public class ServersState {
     private int selfServerId;
     private final ConcurrentHashMap<Integer, Server> serversMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
+    private final Set<Integer> views = Collections.synchronizedSet(new HashSet<>());
 
 
     private ServersState() {
@@ -61,6 +59,8 @@ public class ServersState {
                     selfServerId = Integer.parseInt(server_config[0].substring(1, 2));
                     Thread serverThread = new Thread(server);
                     serverThread.start();
+                    setViews(selfServerId);
+
                 }
 //                System.out.println(Arrays.toString(chatRoomsMap.keySet().toArray()));
 
@@ -104,7 +104,20 @@ public class ServersState {
         return chatRoomsArray;
     }
 
+    public Set<Integer> getViews() {
+        return views;
+    }
 
+    public void setViews(int serverId) {
+        views.add(serverId);
+    }
 
+    public void setViewsList(Set<Integer> serverIdList) {
+        views.addAll(serverIdList);
+    }
 
+    public void resetViews() {
+        views.clear();
+        setViews(selfServerId);
+    }
 }

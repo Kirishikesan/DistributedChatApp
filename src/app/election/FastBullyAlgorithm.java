@@ -39,6 +39,7 @@ public class FastBullyAlgorithm implements Runnable{
     static volatile int highestPriorityServerId = -1;
 
     static volatile ConcurrentHashMap<Integer, Server> answersMap = new ConcurrentHashMap<>();
+    static Set<Integer> incomingViews = Collections.synchronizedSet(new HashSet<>());
 
     public FastBullyAlgorithm(String operation) {
         this.operation = operation;
@@ -86,7 +87,7 @@ public class FastBullyAlgorithm implements Runnable{
                     if(!coordinatorStatus){
                         if(viewStatus){
                             //  0.4 If the view messages are received within T2
-//                            setUpNominator();
+                            handleViews();
 
                         }else{
                             //  0.3 If no view messages within T2, Pi stops the procedure. // Pi is the coordinator
@@ -343,6 +344,63 @@ public class FastBullyAlgorithm implements Runnable{
     }
 
 
+    public static void sendView(int iamupServerId) {
+        try {
+            ConcurrentHashMap<Integer, Server> serversMap = ServersState.getInstance().getServersMap();
+            Set<Integer> localViews;
+            JSONArray viewsArray = new JSONArray();
+            Server destinationServer = serversMap.get(iamupServerId);
+
+            int selfServerId = ServersState.getInstance().getSelfServerId();
+            if (LeaderState.getInstance().isElectedLeader()){
+                localViews = LeaderState.getInstance().getActiveViews();
+            }else{
+                localViews = ServersState.getInstance().getViews();
+            }
+
+            viewsArray.addAll(localViews);
+
+            JSONObject createViewReqObj = ServerResponse.createViewRequest(selfServerId, viewsArray);
+            ServerMessage.sendToServer(createViewReqObj, destinationServer);
+            System.out.println("INFO : Server s"+ selfServerId +" has sent view message to s" + iamupServerId);
+
+        }catch(Exception e){
+            System.out.println("INFO : Server s"+ ServersState.getInstance().getSelfServerId() +" has failed. view message can not be sent to " + iamupServerId);
+        }
+    }
+
+    public static void handleViews(){
+
+        int selfServerId = ServersState.getInstance().getSelfServerId();
+        Set<Integer> localViews = ServersState.getInstance().getViews();
+
+        //  0.4.1 Pi compares its view with the received views
+        if(!localViews.equals(incomingViews)){
+
+            //  0.4.2 If the received view is different from the Pi’s view, Pi updates its view
+            ServersState.getInstance().resetViews();
+            ServersState.getInstance().setViewsList(incomingViews);
+        }
+
+        int maxView = Collections.max(ServersState.getInstance().getViews());
+
+        if(selfServerId == maxView){
+            //  0.4.3 If Pi is the highest priority numbered process
+            //  0.4.3.1 Pi sends a coordinator message to other processes with lower priority number
+            setUpSelfAsLeader();
+            //  0.4.3.2 Pi stops the procedure
+
+        }else{ //  0.4.4 Otherwise
+
+            //  0.4.4.1 Admit the highest priority numbered process as the coordinator
+            JSONObject requestObject = new JSONObject();
+            requestObject.put("identity", maxView);
+            setUpCoordinatorAsLeader(requestObject);
+
+            //  0.4.4.2 Pi stops the election procedure
+        }
+    }
+
     public static void setUpNominator(){
 
         if(answersMap.isEmpty()){
@@ -467,11 +525,24 @@ public class FastBullyAlgorithm implements Runnable{
                 setUpSelfAsLeader();
                 break;
 
-
             case "coordination":
                 setUpCoordinatorAsLeader(requestObject);
                 break;
 
+            case "iamup":
+
+                int iamupServerId = Integer.parseInt(requestObject.get( "identity" ).toString());
+                System.out.println( "INFO : Received IamUp from s" + iamupServerId );
+                sendView(iamupServerId);
+                break;
+
+            case "view":
+
+                viewStatus = true;
+                int viewIdentity = Integer.parseInt(requestObject.get( "identity" ).toString());
+                System.out.println( "INFO : Received view from s" + viewIdentity );
+                updateIncomingView(requestObject);
+                break;
         }
     }
 
@@ -486,13 +557,15 @@ public class FastBullyAlgorithm implements Runnable{
         //  3.4.2 Pj stops its election procedure - coordinatorStatus->true in leader
         electionStatus = false;
         answerStatus = false;
+        viewStatus = false;
         nominationStatus = false;
         coordinatorStatus = true;
 
 
         LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
-        LeaderState.getInstance().setActiveViews(selfServerId);
-        LeaderState.getInstance().setActiveViews(electedLeaderId);
+
+        ServersState.getInstance().resetViews();
+        ServersState.getInstance().setViews(electedLeaderId);
 
         System.out.println( "INFO : Receive coordination message & Server s" + electedLeaderId + " is Admit as leader " );
 
@@ -508,6 +581,14 @@ public class FastBullyAlgorithm implements Runnable{
         } catch (IOException e) {
             System.out.println("WARN : Server s"+ selfServerId +" has fail to send local updates to s" + electedLeaderId);
         }
+
+    }
+
+    public static void updateIncomingView(JSONObject requestObject){
+
+        List<String> viewList = Arrays.asList(requestObject.get( "view" ).toString());
+        Set<Integer> viewSet = (Set<Integer>) viewList.stream().map(viewString -> Integer.parseInt(viewString)).collect(Collectors.toList());
+        incomingViews.addAll(viewSet);
 
     }
 

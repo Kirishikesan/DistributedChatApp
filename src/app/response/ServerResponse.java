@@ -5,6 +5,7 @@ import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerResponse {
@@ -54,6 +55,14 @@ public class ServerResponse {
         responseObj.put("request", "iamup");
         responseObj.put("identity", identity);
 
+        return responseObj;
+    }
+
+    public static JSONObject createViewRequest(int identity , JSONArray view) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("request", "view");
+        responseObj.put("identity", identity);
+        responseObj.put("view", view);
         return responseObj;
     }
 
