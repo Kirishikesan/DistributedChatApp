@@ -183,12 +183,13 @@ public class ClientHandlerThread implements Runnable {
 	            JSONObject chatroom = new JSONObject();
 	        	chatroom.put("chatRoomId",newRoomId);
 	        	chatroom.put("serverId",serverId);
+	        	chatroom.put("ownerId", clientId);
 	        	List<JSONObject> chatrooms = new ArrayList<JSONObject>();
 	        	chatrooms.add(chatroom);
 	        	LeaderState.getInstance().addChatRooms(chatrooms);
-	        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
+//	        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
             }else{
-            	response_obj=ServerMessage.requestLeader(ServerResponse.createRoom(String.valueOf(ServersState.getInstance().getSelfServerId()), newRoomId));
+            	response_obj=ServerMessage.requestLeader(ServerResponse.createRoom(newRoomId,String.valueOf(ServersState.getInstance().getSelfServerId()), clientId));
             	if((int)response_obj.get("status")==-1) {
             		return roomIdsArray;
             	}

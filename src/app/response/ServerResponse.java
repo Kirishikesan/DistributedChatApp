@@ -79,11 +79,12 @@ public class ServerResponse {
         return responseObj;
     }
     
-    public static JSONObject createRoom(String identity, String serverId) {
+    public static JSONObject createRoom(String identity, String serverId, String ownerId) {
     	JSONObject responseObj = new JSONObject();
     	responseObj.put("type","createRoom");
     	responseObj.put("identity", identity);
     	responseObj.put("serverId",serverId);
+    	responseObj.put("ownerId",ownerId);
     	
     	return responseObj;
     }
