@@ -3,10 +3,7 @@ package app.server;
 import app.election.FastBullyAlgorithm;
 import app.leaderState.LeaderState;
 import app.response.ClientResponse;
-import app.response.ServerResponse;
 import app.room.ChatRoom;
-import app.serversState.ServersState;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -21,7 +18,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class ServerHandlerThread implements Runnable{
@@ -53,10 +49,8 @@ public class ServerHandlerThread implements Runnable{
                         if (LeaderState.getInstance().isElectedLeader()){
                             updateLeaderState(server_obj);
                         }
-                    }else if(server_obj.get("type").equals("createRoom")){
-                    	writer.println(approveCreateRoom(server_obj));
+
                     }
-              
                 }
 
             } catch (IOException e) {
@@ -65,30 +59,6 @@ public class ServerHandlerThread implements Runnable{
                 e.printStackTrace();
             }
         }
-    }
-    
-    private JSONObject approveCreateRoom(JSONObject server_obj) throws ParseException, IOException{
-    	String newRoomId=(String)server_obj.get("roomId");
-    	int serverId=(int)server_obj.get("serverId");
-    	int clientId=(int)server_obj.get("ownerId");
-    	Server server = ServersState.getInstance().getServersMap().get(serverId);
-    	for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
-            if (activeChatRoom.get("chatRoomId").equals(newRoomId)) {
-              JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), -1);
-//            	ServerMessage.sendToServer(responseObj, server);
-              return responseObj;
-            }
-        }
-    	JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), 1);
-//    	ServerMessage.sendToServer(responseObj, server);
-    	JSONObject chatroom = new JSONObject();
-    	chatroom.put("chatRoomId",newRoomId);
-    	chatroom.put("serverId",serverId);
-    	chatroom.put("ownerId", clientId);
-    	List<JSONObject> chatrooms = new ArrayList<JSONObject>();
-    	chatrooms.add(chatroom);
-    	LeaderState.getInstance().addChatRooms(chatrooms);
-    	return responseObj;
     }
 
     private void updateLeaderState(JSONObject server_obj) throws ParseException {

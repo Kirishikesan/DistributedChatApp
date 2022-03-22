@@ -1,5 +1,6 @@
 package app.election;
 
+import app.database.ServerDatabase;
 import app.leaderState.LeaderState;
 import app.response.ServerResponse;
 import app.server.Server;
@@ -445,6 +446,7 @@ public class FastBullyAlgorithm implements Runnable{
         LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
 
         LeaderState.getInstance().setActiveViews(selfServerId);
+        ServerDatabase.saveView(LeaderState.getInstance().getActiveViews());
 
         isLeader = true;
 
@@ -566,6 +568,7 @@ public class FastBullyAlgorithm implements Runnable{
 
         ServersState.getInstance().resetViews();
         ServersState.getInstance().setViews(electedLeaderId);
+        ServerDatabase.saveView(ServersState.getInstance().getViews());
 
         System.out.println( "INFO : Receive coordination message & Server s" + electedLeaderId + " is Admit as leader " );
 
