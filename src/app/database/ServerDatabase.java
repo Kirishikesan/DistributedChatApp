@@ -5,6 +5,7 @@ import app.serversState.ServersState;
 import java.sql.*;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ServerDatabase {
 
@@ -15,13 +16,12 @@ public class ServerDatabase {
         String query = "";
         PreparedStatement ps = null;
         String server_id = String.valueOf(ServersState.getInstance().getSelfServerId());
-        String view_list = view.toString();
+        String view_list = view.stream().map(i -> i.toString()).collect(Collectors.joining(","));
 
         try {
 
             ResultSet isViewExit = isViewExit();
             if(isViewExit.next()){
-                System.out.println(isViewExit.getInt(1));
                 if( isViewExit.getInt(1) == 1){
                     query = "update activeViews set view_list=? where server_id = ?";
                     ps = connection.prepareStatement(query);
@@ -58,7 +58,23 @@ public class ServerDatabase {
             System.out.println("WARN: SQL isViewExit Error - " + e.getMessage());
         }
         return result;
+    }
 
+    public static ResultSet getView(){
+        ResultSet result = null;
+        String server_id = String.valueOf(ServersState.getInstance().getSelfServerId());
+        String query = "SELECT view_list from activeViews where server_id = ?";
+
+        PreparedStatement ps = null;
+        try {
+            ps = connection.prepareStatement(query);
+            ps.setString(1, server_id);
+            result = ps.executeQuery();
+
+        } catch (SQLException e) {
+            System.out.println("WARN: SQL getView Error - " + e.getMessage());
+        }
+        return result;
     }
 
 }

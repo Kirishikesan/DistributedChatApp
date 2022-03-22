@@ -1,9 +1,12 @@
 package app.server;
 
+import app.database.ServerDatabase;
 import app.election.FastBullyAlgorithm;
 import app.leaderState.LeaderState;
 import app.response.ClientResponse;
+import app.response.ServerResponse;
 import app.room.ChatRoom;
+import app.serversState.ServersState;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -97,6 +100,7 @@ public class ServerHandlerThread implements Runnable{
 
         int senderId = Integer.parseInt(server_obj.get( "identity" ).toString());
         LeaderState.getInstance().setActiveViews(senderId);
+        ServerDatabase.saveView(LeaderState.getInstance().getActiveViews());
 
         List<String> clients = new ArrayList<String>(Arrays.asList(server_obj.get( "clients" ).toString()));
 
