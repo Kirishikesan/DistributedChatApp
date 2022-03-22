@@ -72,7 +72,7 @@ public class ServerHandlerThread implements Runnable{
     
     private JSONObject approveCreateRoom(JSONObject server_obj) throws ParseException, IOException{
     	String newRoomId=(String)server_obj.get("roomId");
-    	int serverId=(int)server_obj.get("serverId");
+    	String serverId=(String)server_obj.get("serverId");
     	int clientId=(int)server_obj.get("ownerId");
     	Server server = ServersState.getInstance().getServersMap().get(serverId);
     	for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
@@ -96,6 +96,7 @@ public class ServerHandlerThread implements Runnable{
     
     private void updateDeleteRoom(JSONObject server_obj) throws ParseException{
     	LeaderState.getInstance().deleteChatRoom((String)server_obj.get("roomId"));
+    	System.out.println(LeaderState.getInstance().getActiveChatRooms());
     }
 
     private void updateLeaderState(JSONObject server_obj) throws ParseException {
