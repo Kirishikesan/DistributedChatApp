@@ -54,7 +54,7 @@ public class ServerHandlerThread implements Runnable{
                             updateLeaderState(server_obj);
                         }
                     }else if(server_obj.get("type").equals("createRoom")){
-                    	approveCreateRoom(server_obj);
+                    	writer.println(approveCreateRoom(server_obj));
                     }
               
                 }
@@ -67,19 +67,26 @@ public class ServerHandlerThread implements Runnable{
         }
     }
     
-    private void approveCreateRoom(JSONObject server_obj) throws ParseException, IOException{
+    private JSONObject approveCreateRoom(JSONObject server_obj) throws ParseException, IOException{
     	String newRoomId=(String)server_obj.get("roomId");
     	int serverId=(int)server_obj.get("serverId");
     	Server server = ServersState.getInstance().getServersMap().get(serverId);
     	for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
             if (activeChatRoom.get("chatRoomId").equals(newRoomId)) {
-                JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), -1);
-            	ServerMessage.sendToServer(responseObj, server);
-                break;
+              JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), -1);
+//            	ServerMessage.sendToServer(responseObj, server);
+              return responseObj;
             }
         }
     	JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), 1);
-    	ServerMessage.sendToServer(responseObj, server);
+//    	ServerMessage.sendToServer(responseObj, server);
+    	JSONObject chatroom = new JSONObject();
+    	chatroom.put("chatRoomId",newRoomId);
+    	chatroom.put("serverId",serverId);
+    	List<JSONObject> chatrooms = new ArrayList<JSONObject>();
+    	chatrooms.add(chatroom);
+    	LeaderState.getInstance().addChatRooms(chatrooms);
+    	return responseObj;
     }
 
     private void updateLeaderState(JSONObject server_obj) throws ParseException {

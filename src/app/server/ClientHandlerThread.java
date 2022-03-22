@@ -16,6 +16,7 @@ import app.room.ChatRoom;
 import app.serversState.ServersState;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 
 public class ClientHandlerThread implements Runnable {
@@ -165,9 +166,10 @@ public class ClientHandlerThread implements Runnable {
         }
     } 
 
-    private String[] createChatRoom(JSONObject client_obj) throws IOException{
+    private String[] createChatRoom(JSONObject client_obj) throws IOException, ParseException{
         String newRoomId = (String) client_obj.get("roomid");
         String[] roomIdsArray = {roomId, roomId};
+        JSONObject response_obj;
         if (createChatRoomValidation(newRoomId)) {
         	if(LeaderState.getInstance().getLeaderId()==ServersState.getInstance().getSelfServerId()) {
 	            for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
@@ -176,15 +178,9 @@ public class ClientHandlerThread implements Runnable {
 	                }
 	            }
             }else{
-            	ServerMessage.sendToLeader(ServerResponse.createRoom(String.valueOf(ServersState.getInstance().getSelfServerId()), newRoomId));
-            	synchronized(lock) {
-            		if(approvedCreateRoom==-1) {
-            			try {
-							lock.wait(10000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-            		}
+            	response_obj=ServerMessage.requestLeader(ServerResponse.createRoom(String.valueOf(ServersState.getInstance().getSelfServerId()), newRoomId));
+            	if((int)response_obj.get("status")==-1) {
+            		return roomIdsArray;
             	}
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
