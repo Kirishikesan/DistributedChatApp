@@ -55,6 +55,8 @@ public class ServerHandlerThread implements Runnable{
                         }
                     }else if(server_obj.get("type").equals("createRoom")){
                     	writer.println(approveCreateRoom(server_obj));
+                    }else if(server_obj.get("type").equals("deleteRoom")){
+                    	updateDeleteRoom(server_obj);
                     }
               
                 }
@@ -66,6 +68,7 @@ public class ServerHandlerThread implements Runnable{
             }
         }
     }
+    
     
     private JSONObject approveCreateRoom(JSONObject server_obj) throws ParseException, IOException{
     	String newRoomId=(String)server_obj.get("roomId");
@@ -89,6 +92,10 @@ public class ServerHandlerThread implements Runnable{
     	chatrooms.add(chatroom);
     	LeaderState.getInstance().addChatRooms(chatrooms);
     	return responseObj;
+    }
+    
+    private void updateDeleteRoom(JSONObject server_obj) throws ParseException{
+    	LeaderState.getInstance().deleteChatRoom((String)server_obj.get("roomId"));
     }
 
     private void updateLeaderState(JSONObject server_obj) throws ParseException {
