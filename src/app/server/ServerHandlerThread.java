@@ -54,23 +54,21 @@ public class ServerHandlerThread implements Runnable{
                     else if(server_obj.get("type").equals("newidentity")){
                         String clientId = (String)server_obj.get("identity");
                         if(LeaderState.getInstance().addClient(clientId)){
-                            // add clientHandlerThread, "clientThreadId" to the server sent the req
-                            long clientThreadId = (long)server_obj.get("clientThreadId");
-
-
-                            ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
-                            mainHall.addMember(Server.getClientHandlerThread(clientThreadId));
-                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"true\"}");
+                            String clientThreadId = (String) server_obj.get("clientThreadId");
+                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"true\", \"clientThreadId\" :" + clientThreadId + "}");
                         } else{
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"false\"}");
                         }
                     }
                     else if(server_obj.get("type").equals("addnewclient")){
                         if(server_obj.get("approved").equals("true")){
-
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                            // add clientHandlerThread, "clientThreadId" to the server sent the req
+                            long clientThreadId = (long)server_obj.get("clientThreadId");
+                            ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
+                            mainHall.addMember(Server.getClientHandlerThread(clientThreadId));
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
                         }else{
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
                         }
                     }else if(server_obj.get("type").equals("quit")){
                         if(LeaderState.getInstance().removeClient((String) server_obj.get("clientIdToRemove"))){
