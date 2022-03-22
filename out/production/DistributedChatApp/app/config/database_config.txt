@@ -1,0 +1,4 @@
+s1 jdbc:mysql://127.0.0.1:3306/chatApp root ""
+s2 jdbc:mysql://127.0.0.2:3306/chatApp root ""
+s3 jdbc:mysql://127.0.0.3:3306/chatApp root ""
+s4 jdbc:mysql://127.0.0.4:3306/chatApp root ""
