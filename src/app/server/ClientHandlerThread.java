@@ -171,6 +171,7 @@ public class ClientHandlerThread implements Runnable {
 
             } catch (Exception e) {
                 System.out.println("client - " + e);
+                e.printStackTrace();
             }
         }
     } 
@@ -197,7 +198,7 @@ public class ClientHandlerThread implements Runnable {
 	        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
             }else{
             	response_obj=ServerMessage.requestLeader(ServerResponse.createRoom(newRoomId,String.valueOf(ServersState.getInstance().getSelfServerId()), clientId));
-            	if((int)response_obj.get("status")==-1) {
+            	if((long)response_obj.get("status")==-1) {
             		return roomIdsArray;
             	}
             	System.out.println(LeaderState.getInstance().getActiveChatRooms());
