@@ -87,23 +87,6 @@ public class Server implements Runnable{
         return clientHandlerThreadsMap.get(clientThreadId);
     }
 
-    public static boolean addClient(String newClientId){ //adding client to the global list
-        Set<String> activeClients = LeaderState.getInstance().getActiveClientsList();
-        if(activeClients.contains(newClientId)){ // client already exist
-            return false;
-        }else{
-            activeClients.add(newClientId);
-
-            ArrayList<String> activeClientsList = new ArrayList<String>();
-            for(String client : activeClients){
-                activeClientsList.add(client);
-            }
-
-            LeaderState.getInstance().addClients(activeClientsList);
-            return true;
-        }
-    }
-
     public ChatRoom create_default_chat_room(String roomId) {
         return new ChatRoom(roomId, null);
     }

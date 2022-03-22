@@ -53,7 +53,7 @@ public class ServerHandlerThread implements Runnable{
                     }
                     else if(server_obj.get("type").equals("newidentity")){
                         String clientId = (String)server_obj.get("identity");
-                        if(Server.addClient(clientId)){
+                        if(LeaderState.getInstance().addClient(clientId)){
                             // add clientHandlerThread, "clientThreadId" to the server sent the req
                             long clientThreadId = (long)server_obj.get("clientThreadId");
 
@@ -71,6 +71,12 @@ public class ServerHandlerThread implements Runnable{
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
                         }else{
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                        }
+                    }else if(server_obj.get("type").equals("quit")){
+                        if(LeaderState.getInstance().removeClient((String) server_obj.get("clientIdToRemove"))){
+                            System.out.println("Client removed successfully");
+                        }else{
+                            System.out.println("couldn't remove the client");
                         }
                     }
                 }

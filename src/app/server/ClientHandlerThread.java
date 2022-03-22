@@ -74,7 +74,7 @@ public class ClientHandlerThread implements Runnable {
                     clientId = (String) client_obj.get("identity");
                     //int leaderId = LeaderState.getInstance().getLeaderId();
                     if(LeaderState.getInstance().isLeader()){ // if this is the leader
-                        if(Server.addClient(clientId)){ // client doesnt  exist
+                        if(LeaderState.getInstance().addClient(clientId)){ // client doesnt  exist
                             ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
                             mainHall.addMember(this);
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
@@ -161,7 +161,7 @@ public class ClientHandlerThread implements Runnable {
                         }
                     }
                 }else if (client_obj.get("type").equals("quit")) {
-                    String[] roomIdsArray = quit();
+                    String[] roomIdsArray = quit(client_obj);
                     boolean isQuitSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
 
                     if(isQuitSuccess){
@@ -330,7 +330,7 @@ public class ClientHandlerThread implements Runnable {
         return deleteRoomId(client_obj);
     }
 
-    private String[] quit(){
+    private String[] quit(JSONObject client_obj) throws IOException {
 
         String[] quitRoomIdsArray = {roomId, roomId};
 
@@ -374,6 +374,16 @@ public class ClientHandlerThread implements Runnable {
             Server.removeClientSocket(this.clientThreadId);
 
             // TO Do - update global server
+            if(LeaderState.getInstance().isLeader()){
+                if(LeaderState.getInstance().removeClient(clientId)){
+                    System.out.println("Client removed successfully");
+                }else{
+                    System.out.println("couldn't remove the client");
+                }
+            }else{
+                client_obj.put("clientIdToRemove",clientId);
+                sendToLeader(client_obj);
+            }
 
 
             quitRoomIdsArray[1] = "";
