@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -177,6 +179,14 @@ public class ClientHandlerThread implements Runnable {
 	                    return roomIdsArray;
 	                }
 	            }
+	        	int serverId=ServersState.getInstance().getSelfServerId();
+	            JSONObject chatroom = new JSONObject();
+	        	chatroom.put("chatRoomId",newRoomId);
+	        	chatroom.put("serverId",serverId);
+	        	List<JSONObject> chatrooms = new ArrayList<JSONObject>();
+	        	chatrooms.add(chatroom);
+	        	LeaderState.getInstance().addChatRooms(chatrooms);
+	        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
             }else{
             	response_obj=ServerMessage.requestLeader(ServerResponse.createRoom(String.valueOf(ServersState.getInstance().getSelfServerId()), newRoomId));
             	if((int)response_obj.get("status")==-1) {
@@ -304,7 +314,6 @@ public class ClientHandlerThread implements Runnable {
 
     private String[] moveAll(ChatRoom formerChatRoom, ChatRoom mainHall) {
         String[] roomIdsArray = {roomId, roomId};
-
         ConcurrentHashMap<String, ClientHandlerThread> formerChatRoomClients = formerChatRoom.getMembers();
         mainHall.addMembers(formerChatRoomClients);
 
