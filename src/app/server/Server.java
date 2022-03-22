@@ -87,7 +87,7 @@ public class Server implements Runnable{
         return clientHandlerThreadsMap.get(clientThreadId);
     }
 
-    public static boolean addClient(String newClientId){
+    public static boolean addClient(String newClientId){ //add client to the global list
         Set<String> activeClients = LeaderState.getInstance().getActiveClientsList();
         if(activeClients.contains(newClientId)){ // client already exist
             return false;

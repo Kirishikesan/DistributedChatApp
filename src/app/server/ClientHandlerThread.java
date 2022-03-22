@@ -72,7 +72,7 @@ public class ClientHandlerThread implements Runnable {
 //                adding users
                 if (client_obj.get("type").equals("newidentity")) {
                     clientId = (String) client_obj.get("identity");
-                    int leaderId = LeaderState.getInstance().getLeaderId();
+                    //int leaderId = LeaderState.getInstance().getLeaderId();
                     if(LeaderState.getInstance().isLeader()){ // if this is the leader
                         if(Server.addClient(clientId)){ // client doesnt  exist
                             ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
