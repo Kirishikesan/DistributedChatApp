@@ -29,7 +29,6 @@ public class ClientHandlerThread implements Runnable {
     private String roomId;
     private Socket clientSocket;
     private Long clientThreadId;
-    private int approvedCreateRoom = -1;
     
     final Object lock=new Object();
 
@@ -140,6 +139,7 @@ public class ClientHandlerThread implements Runnable {
                     	String serverId = String.valueOf(ServersState.getInstance().getSelfServerId());
                     	if(ServersState.getInstance().getSelfServerId()==LeaderState.getInstance().getLeaderId()) {
                         	LeaderState.getInstance().deleteChatRoom((String)client_obj.get("roomid"));
+                        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
                     	}else {
                     		ServerMessage.sendToLeader(ServerResponse.deleteRoom(roomId, serverId));
                     	}
@@ -194,12 +194,13 @@ public class ClientHandlerThread implements Runnable {
 	        	List<JSONObject> chatrooms = new ArrayList<JSONObject>();
 	        	chatrooms.add(chatroom);
 	        	LeaderState.getInstance().addChatRooms(chatrooms);
-//	        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
+	        	System.out.println(LeaderState.getInstance().getActiveChatRooms());
             }else{
             	response_obj=ServerMessage.requestLeader(ServerResponse.createRoom(newRoomId,String.valueOf(ServersState.getInstance().getSelfServerId()), clientId));
             	if((int)response_obj.get("status")==-1) {
             		return roomIdsArray;
             	}
+            	System.out.println(LeaderState.getInstance().getActiveChatRooms());
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
             ServersState.getInstance().getChatRoomsMap().put(newRoomId, newChatRoom);
@@ -215,10 +216,6 @@ public class ClientHandlerThread implements Runnable {
             return roomIdsArray;
         }
         return roomIdsArray;
-    }
-    
-    public void approveCreateRoom(int approvedCreateRoom) {
-    	this.approvedCreateRoom = approvedCreateRoom;
     }
 
     private String[] joiningRoomId(JSONObject client_obj) {
