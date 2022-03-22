@@ -26,6 +26,9 @@ public class ClientHandlerThread implements Runnable {
     private String roomId;
     private Socket clientSocket;
     private Long clientThreadId;
+    private int approvedCreateRoom = -1;
+    
+    final Object lock=new Object();
 
     public ClientHandlerThread() {
     }
@@ -173,7 +176,16 @@ public class ClientHandlerThread implements Runnable {
 	                }
 	            }
             }else{
-            	ServerMessage.sendToLeader(ServerResponse.createChatRoom(ServersState.getInstance().getSelfServerId(), newRoomId));
+            	ServerMessage.sendToLeader(ServerResponse.createRoom(String.valueOf(ServersState.getInstance().getSelfServerId()), newRoomId));
+            	synchronized(lock) {
+            		if(approvedCreateRoom==-1) {
+            			try {
+							lock.wait(10000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+            		}
+            	}
             }
             ChatRoom newChatRoom = new ChatRoom(newRoomId, this);
             ServersState.getInstance().getChatRoomsMap().put(newRoomId, newChatRoom);
@@ -189,6 +201,10 @@ public class ClientHandlerThread implements Runnable {
             return roomIdsArray;
         }
         return roomIdsArray;
+    }
+    
+    public void approveCreateRoom(int approvedCreateRoom) {
+    	this.approvedCreateRoom = approvedCreateRoom;
     }
 
     private String[] joiningRoomId(JSONObject client_obj) {

@@ -3,6 +3,8 @@ package app.response;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import app.server.ServerMessage;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -77,12 +79,22 @@ public class ServerResponse {
         return responseObj;
     }
     
-    public static JSONObject createChatRoom(int identity, String roomId) {
+    public static JSONObject createRoom(String identity, String serverId) {
     	JSONObject responseObj = new JSONObject();
     	responseObj.put("type","createRoom");
     	responseObj.put("identity", identity);
-    	responseObj.put("roomId",roomId);
+    	responseObj.put("serverId",serverId);
     	
+    	return responseObj;
+    }
+    
+    public static JSONObject approveCreateRoom(String identity, String serverId, int status) {
+    	JSONObject responseObj = new JSONObject();
+    	responseObj.put("type", "approveCreateRoom");
+    	responseObj.put("identity", identity);
+    	responseObj.put("serverId", serverId);
+    	responseObj.put("status", status);
+
     	return responseObj;
     }
 
