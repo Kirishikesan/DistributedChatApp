@@ -12,6 +12,8 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,10 +49,20 @@ public class FastBullyAlgorithm implements Runnable{
     }
 
     public static void initializeLeader(){
-        // start initial election
+
         System.out.println("start FastBullyAlgorithm");
-        Runnable procedure = new FastBullyAlgorithm("election");
-        new Thread(procedure).start();
+
+        if(isRecoverdServer()){
+            // start IAMUP
+            Runnable procedure = new FastBullyAlgorithm("iamup");
+            new Thread(procedure).start();
+        }else{
+
+            // start initial election
+            Runnable procedure = new FastBullyAlgorithm("election");
+            new Thread(procedure).start();
+        }
+
     }
 
 
@@ -217,6 +229,10 @@ public class FastBullyAlgorithm implements Runnable{
     public static void sendElection(){
         System.out.println("INFO : start election");
 
+        //reset views - remove leader from view
+        ServersState.getInstance().resetViews();
+        ServerDatabase.saveView(ServersState.getInstance().getViews());
+
         answerStatus = false;
         viewStatus = false;
         nominationStatus = false;
@@ -373,7 +389,7 @@ public class FastBullyAlgorithm implements Runnable{
     public static void handleViews(){
 
         int selfServerId = ServersState.getInstance().getSelfServerId();
-        Set<Integer> localViews = ServersState.getInstance().getViews();
+        Set<Integer> localViews = getSavedView();
 
         //  0.4.1 Pi compares its view with the received views
         if(!localViews.equals(incomingViews)){
@@ -381,6 +397,11 @@ public class FastBullyAlgorithm implements Runnable{
             //  0.4.2 If the received view is different from the Pi’s view, Pi updates its view
             ServersState.getInstance().resetViews();
             ServersState.getInstance().setViewsList(incomingViews);
+            ServerDatabase.saveView(ServersState.getInstance().getViews());
+        }else{
+
+            ServersState.getInstance().resetViews();
+            ServersState.getInstance().setViewsList(localViews);
         }
 
         int maxView = Collections.max(ServersState.getInstance().getViews());
@@ -587,11 +608,41 @@ public class FastBullyAlgorithm implements Runnable{
 
     }
 
+    public static boolean isRecoverdServer(){
+        boolean isRecoverd = false;
+        Set<Integer> localViews = getSavedView();
+        System.out.println("INFO: savedView - " + localViews.toString());
+        isRecoverd = !localViews.isEmpty();
+        return isRecoverd;
+    }
+
+    public static Set<Integer> getSavedView(){
+        Set<Integer> localViews = Collections.synchronizedSet(new HashSet<>());;
+        ResultSet recoverView = ServerDatabase.getView();
+        try {
+            if(recoverView.next()){
+
+                List<String> recoverViewList = new ArrayList<String>(Arrays.asList(recoverView.getString(1).split(",")));
+                Set<Integer> savedView = recoverViewList.stream().map(recoverViewObject -> Integer.parseInt(recoverViewObject)).collect(Collectors.toSet());
+                localViews.addAll(savedView);            }
+        } catch (SQLException e) {
+            System.out.println("WARN: SQL getSavedView Error - " + e.getMessage());
+        }
+
+        return localViews;
+    }
+
     public static void updateIncomingView(JSONObject requestObject){
 
-        List<String> viewList = Arrays.asList(requestObject.get( "view" ).toString());
-        Set<Integer> viewSet = (Set<Integer>) viewList.stream().map(viewString -> Integer.parseInt(viewString)).collect(Collectors.toList());
-        incomingViews.addAll(viewSet);
+        JSONArray viewList = null;
+        try {
+            viewList = (JSONArray) new JSONParser().parse(requestObject.get( "view" ).toString());
+            Set<Integer> viewSet = (Set<Integer>) viewList.stream().map(viewString -> Integer.parseInt(viewString.toString())).collect(Collectors.toSet());
+            incomingViews.addAll(viewSet);
+        } catch (ParseException e) {
+            System.out.println("WARN: updateIncomingView Error - " + e.getMessage());
+        }
+
 
     }
 
