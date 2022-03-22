@@ -46,6 +46,8 @@ public class ClientHandlerThread implements Runnable {
         this.clientThreadId = clientThreadId;
     }
 
+    public long getClientThreadId(){return clientThreadId; }
+
     public String getClientId() {
         return clientId;
     }
@@ -70,8 +72,8 @@ public class ClientHandlerThread implements Runnable {
 //                adding users
                 if (client_obj.get("type").equals("newidentity")) {
                     clientId = (String) client_obj.get("identity");
-                    int leaderId = LeaderState.getLeaderId();
-                    if(leaderId == serverid){ // if this is the leader
+                    int leaderId = LeaderState.getInstance().getLeaderId();
+                    if(LeaderState.getInstance().isLeader()){ // if this is the leader
                         if(Server.addClient(clientId)){ // client doesnt  exist
                             ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
                             mainHall.addMember(this);
@@ -80,6 +82,7 @@ public class ClientHandlerThread implements Runnable {
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
                         }
                     } else{
+                        client_obj.put("clientThreadId",this.getClientThreadId());
                         sendToLeader(client_obj);
                     }
 

@@ -4,6 +4,7 @@ import app.election.FastBullyAlgorithm;
 import app.leaderState.LeaderState;
 import app.response.ClientResponse;
 import app.room.ChatRoom;
+import app.serversState.ServersState;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -53,9 +54,22 @@ public class ServerHandlerThread implements Runnable{
                     else if(server_obj.get("type").equals("newidentity")){
                         String clientId = (String)server_obj.get("identity");
                         if(Server.addClient(clientId)){
-                            // add client to the server sent the req
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                            // add clientHandlerThread, "clientThreadId" to the server sent the req
+                            long clientThreadId = (long)server_obj.get("clientThreadId");
+
+
+                            ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
+                            mainHall.addMember(Server.getClientHandlerThread(clientThreadId));
+                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"true\"}");
                         } else{
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                        }
+                    }
+                    else if(server_obj.get("type").equals("addnewclient")){
+                        if(server_obj.get("approved").equals("true")){
+
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                        }else{
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
                         }
                     }

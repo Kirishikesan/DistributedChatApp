@@ -2,12 +2,14 @@ package app.server;
 
 import app.leaderState.LeaderState;
 import app.room.ChatRoom;
-import app.serversState.ServersState;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,22 +26,20 @@ public class Server implements Runnable{
     public static ServerSocket serverClientSocket;
     public static ServerSocket serverCoordinationSocket;
 
-
     //    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<Long, Thread> client_threads = new ConcurrentHashMap<>();
+    public static HashMap<Long, ClientHandlerThread> clientHandlerThreadsMap = new HashMap<>();
 
     public Server(int serverId, String server_address, int clients_port, int coordination_port) {
         this.serverId = serverId;
         this.server_address = server_address;
         this.clients_port = clients_port;
         this.coordination_port = coordination_port;
-
     }
 
     public static int getserverId() {
         return serverId;
     }
-
 
     public String getServerAddress() {
         return server_address;
@@ -76,22 +76,30 @@ public class Server implements Runnable{
 
                 clientHandlerThread.setClientThreadId(client_thread.getId());
                 client_threads.put(client_thread.getId(), client_thread);
-
-
+                clientHandlerThreadsMap.put(client_thread.getId(), clientHandlerThread);
             } catch (Exception e) {
                 System.out.println("server" + e);
             }
         }
-
     }
 
-    public static boolean addClient(String clientId){
-        Set<String> activeClients = LeaderState.getActiveClientsList();
-        if(activeClients.contains(clientId)){ // client already exist
+    public static ClientHandlerThread getClientHandlerThread(long clientThreadId){
+        return clientHandlerThreadsMap.get(clientThreadId);
+    }
+
+    public static boolean addClient(String newClientId){
+        Set<String> activeClients = LeaderState.getInstance().getActiveClientsList();
+        if(activeClients.contains(newClientId)){ // client already exist
             return false;
         }else{
-            activeClients.add(clientId);
-            LeaderState.setActiveClientsList(activeClients);
+            activeClients.add(newClientId);
+
+            ArrayList<String> activeClientsList = new ArrayList<String>();
+            for(String client : activeClients){
+                activeClientsList.add(client);
+            }
+
+            LeaderState.getInstance().addClients(activeClientsList);
             return true;
         }
     }
