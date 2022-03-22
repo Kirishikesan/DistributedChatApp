@@ -136,9 +136,15 @@ public class ClientHandlerThread implements Runnable {
                     boolean isRoomDeleteSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
                     JSONObject listRoomsResJsonObj = ClientResponse.deleteChatRoomResponse(roomIdsArray[0], String.valueOf(isRoomDeleteSuccess));
                     this.writer.println(listRoomsResJsonObj);
-
-                    // TO Do - notify servers
-
+                    if(isRoomDeleteSuccess) {
+                    	String serverId = String.valueOf(ServersState.getInstance().getSelfServerId());
+                    	if(ServersState.getInstance().getSelfServerId()==LeaderState.getInstance().getLeaderId()) {
+                        	LeaderState.getInstance().deleteChatRoom((String)client_obj.get("roomid"));
+                    	}else {
+                    		ServerMessage.sendToLeader(ServerResponse.deleteRoom(roomId, serverId));
+                    	}
+                    }
+//                    System.out.println(LeaderState.getInstance().getActiveChatRooms());
                 } else if (client_obj.get("type").equals("message")) {
                     JSONObject messageChatRoomsJsonObj = ClientResponse.messageChatRoom(clientId, (String) client_obj.get("content"));
 
@@ -155,9 +161,10 @@ public class ClientHandlerThread implements Runnable {
                     boolean isQuitSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
 
                     if(isQuitSuccess){
-
+                    	
                         //close connection
                         clientSocket.close();
+                        
                     }
 
                 }

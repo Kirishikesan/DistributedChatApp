@@ -49,7 +49,10 @@ public class ServerHandlerThread implements Runnable{
                         if (LeaderState.getInstance().isElectedLeader()){
                             updateLeaderState(server_obj);
                         }
-
+                    }else if(server_obj.get("type").equals("createRoom")){
+                    	writer.println(approveCreateRoom(server_obj));
+                    }else if(server_obj.get("type").equals("deleteRoom")){
+                    	updateDeleteRoom(server_obj);
                     }
                 }
 
@@ -59,6 +62,34 @@ public class ServerHandlerThread implements Runnable{
                 e.printStackTrace();
             }
         }
+    }
+
+    private JSONObject approveCreateRoom(JSONObject server_obj) throws ParseException, IOException{
+    	String newRoomId=(String)server_obj.get("roomId");
+    	int serverId=(int)server_obj.get("serverId");
+    	int clientId=(int)server_obj.get("ownerId");
+    	Server server = ServersState.getInstance().getServersMap().get(serverId);
+    	for (JSONObject activeChatRoom : LeaderState.getInstance().getActiveChatRooms()) {
+            if (activeChatRoom.get("chatRoomId").equals(newRoomId)) {
+              JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), -1);
+//            	ServerMessage.sendToServer(responseObj, server);
+              return responseObj;
+            }
+        }
+    	JSONObject responseObj = ServerResponse.approveCreateRoom((String)server_obj.get("identity"), (String)server_obj.get("serverId"), 1);
+//    	ServerMessage.sendToServer(responseObj, server);
+    	JSONObject chatroom = new JSONObject();
+    	chatroom.put("chatRoomId",newRoomId);
+    	chatroom.put("serverId",serverId);
+    	chatroom.put("ownerId", clientId);
+    	List<JSONObject> chatrooms = new ArrayList<JSONObject>();
+    	chatrooms.add(chatroom);
+    	LeaderState.getInstance().addChatRooms(chatrooms);
+    	return responseObj;
+    }
+    
+    private void updateDeleteRoom(JSONObject server_obj) throws ParseException{
+    	LeaderState.getInstance().deleteChatRoom((String)server_obj.get("roomId"));
     }
 
     private void updateLeaderState(JSONObject server_obj) throws ParseException {

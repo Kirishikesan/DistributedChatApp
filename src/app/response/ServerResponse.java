@@ -89,6 +89,15 @@ public class ServerResponse {
     	return responseObj;
     }
     
+    public static JSONObject deleteRoom(String identity, String serverId) {
+    	JSONObject responseObj = new JSONObject();
+    	responseObj.put("type","deleteRoom");
+    	responseObj.put("identity", identity);
+    	responseObj.put("serverId",serverId);
+    	
+    	return responseObj;
+    }
+    
     public static JSONObject approveCreateRoom(String identity, String serverId, int status) {
     	JSONObject responseObj = new JSONObject();
     	responseObj.put("type", "approveCreateRoom");
