@@ -257,9 +257,19 @@ public class ClientHandlerThread implements Runnable {
 
                         //close connection
                         clientSocket.close();
-
                     }
-
+                } else if(client_obj.get("type").equals("who")){
+                    roomId = this.roomId;
+                    ConcurrentHashMap<String, ChatRoom> chatroomsmap = ServersState.getInstance().getChatRoomsMap();
+                    ChatRoom currentChatRoom = chatroomsmap.get(roomId);
+                    ConcurrentHashMap<String, ClientHandlerThread> members = currentChatRoom.getMembers();
+                    ArrayList<String> roomMembersList = new ArrayList<>();
+                    for(String s : members.keySet()){
+                        System.out.println(roomId + " room member : " + s);
+                        roomMembersList.add(s);
+                    }
+                    JSONObject roomContents = ClientResponse.roomMembers(roomId, roomMembersList, currentChatRoom.getOwner());
+                    writer.println(roomContents);
                 }
 
             } catch (Exception e) {
