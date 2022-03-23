@@ -502,6 +502,8 @@ public class ClientHandlerThread implements Runnable {
 
         String[] quitRoomIdsArray = {roomId, roomId};
 
+        System.out.println("INSIDE QUIT FUNCTION...");
+
         boolean isQuitRoomIdExist = false;
         boolean isQuitRoomOwnerExist = false;
 
@@ -511,7 +513,7 @@ public class ClientHandlerThread implements Runnable {
             if (ServersState.getInstance().getChatRoomsMap().get(key).getOwner().equals(clientId))
                 isQuitRoomOwnerExist = true;
         }
-
+        System.out.println("isQuitRoomIdExist "+isQuitRoomIdExist+"isQuitRoomOwnerExist "+isQuitRoomOwnerExist);
 //        System.out.println("cl - " + this.clientId + " " + roomId);
 
         if (isQuitRoomIdExist) {
@@ -537,13 +539,14 @@ public class ClientHandlerThread implements Runnable {
             notifyClients.forEach((former_key, clientHandlerThread) -> {
                 if (!former_key.equals("default")) clientHandlerThread.writer.println(listRoomsResJsonObj);
             });
-
+            System.out.println("--update local");
             //update local server
             ChatRoom quitChatRoom = ServersState.getInstance().getChatRoomsMap().get(roomId);
             quitChatRoom.removeMember(this);
-            Server.removeClientThread(this.clientThreadId);
 
+            //System.out.println("--update GLOBAL");
             // TO Do - update global server
+
             if (LeaderState.getInstance().isLeader()) {
                 if (LeaderState.getInstance().removeClient(clientId)) {
                     System.out.println("Client removed successfully");
@@ -554,6 +557,8 @@ public class ClientHandlerThread implements Runnable {
                 client_obj.put("clientIdToRemove", clientId);
                 sendToLeader(client_obj);
             }
+
+            Server.removeClientThread(this.clientThreadId);
 
 
             quitRoomIdsArray[1] = "";
