@@ -11,7 +11,7 @@ public class App {
 
         System.out.println("Input server : " + args[0]);
         ServersState.getInstance().initializeServer(args[0], args[1]);
-        DatabaseConnection.getInstance().initializeDatabaseConnection(args[0], args[1]);
+        DatabaseConnection.getInstance().initializeDatabaseConnection();
 
         FastBullyAlgorithm.initializeLeader();
 
