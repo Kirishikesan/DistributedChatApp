@@ -157,5 +157,12 @@ public class ServerHandlerThread implements Runnable{
         System.out.println( Arrays.toString(LeaderState.getInstance().getActiveViews().toArray()) );
     }
 
+    private JSONObject getAllRooms(JSONObject server_obj) throws ParseException{
+        Set<JSONObject> allRooms = LeaderState.getInstance().getActiveChatRooms();
+        JSONObject responseObj = ServerResponse.sendAllRooms(allRooms);
+
+        return responseObj;
+    }
+
 
 }
