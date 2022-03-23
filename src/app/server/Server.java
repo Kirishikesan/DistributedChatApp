@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Server implements Runnable{
 
-    private static int serverId;
+    private final int serverId;
     private String server_address;
     private final int clients_port;
     private final int coordination_port;
@@ -37,7 +37,7 @@ public class Server implements Runnable{
         this.coordination_port = coordination_port;
     }
 
-    public static int getserverId() {
+    public int getserverId() {
         return serverId;
     }
 
