@@ -131,6 +131,23 @@ public class ServerResponse {
     	return responseObj;
     }
 
+    public static JSONObject newIdentityResp(String isApproved){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "newidentity");
+        responseObj.put("approved", isApproved);
+
+        return responseObj;
+    }
+
+    public static JSONObject addNewClientResp(String isApproved, String clientThreadId){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "addnewclient");
+        responseObj.put("approved", isApproved);
+        responseObj.put("clientThreadId", clientThreadId);
+
+        return responseObj;
+    }
+
     public static JSONObject informServersNewIdentity(String serverID, String identity, String updatedID){
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "gossipNewIdentity");
