@@ -7,6 +7,8 @@ import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,9 +20,11 @@ public class ServersState {
     private final ConcurrentHashMap<String, ChatRoom> chatRoomsMap = new ConcurrentHashMap<>();
     private final Set<Integer> views = Collections.synchronizedSet(new HashSet<>());
 
+    private final ConcurrentHashMap<Integer, Socket> serverSocketMap = new ConcurrentHashMap<>();
 
     private ServersState() {
     }
+
 
     public int getSelfServerId() {
         return selfServerId;
@@ -66,10 +70,31 @@ public class ServersState {
 
             }
 
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("An error occurred - " + e.getMessage());
         }
+    }
+
+
+    public Socket getServerSocket(Server server) {
+        int serverId = server.getserverId();
+        if(serverSocketMap.containsKey(serverId)){
+            return serverSocketMap.get(serverId);
+        }else{
+            return addServerSocket(server);
+        }
+    }
+
+    public Socket addServerSocket(Server server) {
+        Socket serverSocket = null;
+        try {
+            serverSocket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+            serverSocketMap.put(server.getserverId(), serverSocket);
+        } catch (IOException e) {
+            System.out.println("socket doesn't exit s" + server.getserverId() + " - " + e.getMessage());
+        }
+
+        return serverSocket;
     }
 
     public ConcurrentHashMap<String, ChatRoom> getChatRoomsMap() {

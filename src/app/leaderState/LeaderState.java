@@ -6,7 +6,13 @@ import app.server.ClientHandlerThread;
 import app.serversState.ServersState;
 import org.json.simple.JSONObject;
 
-import java.util.*;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LeaderState {
@@ -14,10 +20,10 @@ public class LeaderState {
 
     private int leaderId;
 
-    private final Set<Integer> activeViews = Collections.synchronizedSet(new HashSet<>());
+    private Set<Integer> activeViews = Collections.synchronizedSet(new HashSet<>());
 
-    private final Set<String> activeClientsList = Collections.synchronizedSet(new HashSet<>());
-    private final Set<JSONObject> activeChatRooms = Collections.synchronizedSet(new HashSet<>());
+    private Set<String> activeClientsList = Collections.synchronizedSet(new HashSet<>());
+    private Set<JSONObject> activeChatRooms = Collections.synchronizedSet(new HashSet<>());
 
 
     private LeaderState() {
@@ -59,6 +65,17 @@ public class LeaderState {
 
     public void addChatRooms(List<JSONObject> chatRoom) {
         activeChatRooms.addAll(chatRoom);
+    }
+    
+    public void deleteChatRoom(String chatRoomId) {
+    	Iterator<JSONObject> chatRoomIterator = activeChatRooms.iterator();
+    	while(chatRoomIterator.hasNext()) {
+    		JSONObject chatRoom = chatRoomIterator.next();
+    		if(((String)(chatRoom.get("chatRoomId"))).equals(chatRoomId)) {
+    			activeChatRooms.remove(chatRoom);
+    			break;
+    		}
+    	}
     }
 
     public Set<Integer> getActiveViews() {

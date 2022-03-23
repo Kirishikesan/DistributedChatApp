@@ -1,7 +1,9 @@
 package app.server;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +36,21 @@ public class ServerMessage {
         Socket serverSocket = new Socket(destination.getServerAddress(), destination.getCoordinationPort());
         PrintWriter writer = new PrintWriter(serverSocket.getOutputStream(), true);
         writer.println(message);
+    }
+    
+    public static JSONObject requestLeader(JSONObject message) throws IOException, ParseException
+    {
+        int leaderId = LeaderState.getInstance().getLeaderId();
+        ConcurrentHashMap<Integer, Server> serversMap = ServersState.getInstance().getServersMap();
+
+        Server destination = serversMap.get(leaderId);
+        Socket serverSocket = new Socket(destination.getServerAddress(), destination.getCoordinationPort());
+        PrintWriter writer = new PrintWriter(serverSocket.getOutputStream(), true);
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
+        JSONParser parser = new JSONParser();
+        writer.println(message);
+        String msg = bufferedReader.readLine();
+        return (JSONObject) parser.parse(msg);
     }
 
 }
