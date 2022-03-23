@@ -260,6 +260,11 @@ public class ClientHandlerThread implements Runnable {
 
                     }
 
+                } else if (client_obj.get("type").equals("who")) {
+                    ArrayList<String> clientList =  getCurrentClients();
+                    String ownerId = currentRoomOwner();
+                    JSONObject messageClientListJsonObj = ClientResponse.getCurrentClientRequest(roomId, clientList, ownerId);
+                    writer.println(messageClientListJsonObj);
                 }
 
             } catch (Exception e) {
@@ -582,5 +587,21 @@ public class ClientHandlerThread implements Runnable {
         }
 
         return quitRoomIdsArray;
+    }
+
+    private ArrayList<String> getCurrentClients() {
+
+        ChatRoom currentRoom = ServersState.getInstance().getChatRoomsMap().get(roomId);
+        ConcurrentHashMap<String, ClientHandlerThread> currentMembers = currentRoom.getMembers();
+        ArrayList<String> clientIdList = new ArrayList<>();
+        clientIdList.addAll(currentMembers.keySet());
+
+        return clientIdList;
+    }
+
+    private String currentRoomOwner() {
+
+        ChatRoom currentRoom = ServersState.getInstance().getChatRoomsMap().get(roomId);
+        return currentRoom.getOwner();
     }
 }
