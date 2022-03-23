@@ -1,6 +1,7 @@
 package app.response;
 
 import app.room.ChatRoom;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
@@ -54,11 +55,11 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject serverChange(String serverId) {
+    public static JSONObject serverChange(int serverId) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "serverchange");
         responseObj.put("approved", "true");
-        responseObj.put("serverid", "serverId");
+        responseObj.put("serverid", serverId);
 
         return responseObj;
     }
@@ -94,4 +95,24 @@ public class ClientResponse {
 
         return responseObj;
     }
+
+    public static JSONObject newIdentityResp(String isApproved){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "newidentity");
+        responseObj.put("approved", isApproved);
+
+        return responseObj;
+    }
+
+    public static JSONObject getCurrentClientRequest(String joiningRoomId, ArrayList<String> clients, String ownerId) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "roomcontents");
+        responseObj.put("roomid", joiningRoomId);
+        responseObj.put("identities", clients);
+        responseObj.put("owner", ownerId);
+
+
+        return responseObj;
+    }
+
 }
