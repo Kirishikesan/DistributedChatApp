@@ -625,7 +625,7 @@ public class FastBullyAlgorithm implements Runnable{
                 List<String> recoverViewList = new ArrayList<String>(Arrays.asList(recoverView.getString(1).split(",")));
                 Set<Integer> savedView = recoverViewList.stream().map(recoverViewObject -> Integer.parseInt(recoverViewObject)).collect(Collectors.toSet());
                 localViews.addAll(savedView);            }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.out.println("WARN: SQL getSavedView Error - " + e.getMessage());
         }
 
