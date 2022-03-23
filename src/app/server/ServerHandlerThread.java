@@ -40,6 +40,7 @@ public class ServerHandlerThread implements Runnable{
                 Socket serverSocket = serverCoordinationSocket.accept();
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
                 PrintWriter writer = new PrintWriter(serverSocket.getOutputStream(), true);
+                //PrintWriter clientwriter = new PrintWriter(clientSocket.getOutputStream(), true);
                 String msg = bufferedReader.readLine();
                 JSONObject server_obj = (JSONObject) new JSONParser().parse(msg);
 
@@ -54,10 +55,47 @@ public class ServerHandlerThread implements Runnable{
                         if (LeaderState.getInstance().isElectedLeader()){
                             updateLeaderState(server_obj);
                         }
+
                     }else if(server_obj.get("type").equals("createRoom")){
                     	writer.println(approveCreateRoom(server_obj));
                     }else if(server_obj.get("type").equals("deleteRoom")){
                     	updateDeleteRoom(server_obj);
+
+                    }
+                    else if(server_obj.get("type").equals("newidentity")){
+                        String clientId = (String)server_obj.get("identity");
+                        System.out.println("Received by the leader");
+                        if(LeaderState.getInstance().addClient(clientId)){
+                            String clientThreadId = String.valueOf(server_obj.get("clientThreadId"));
+                            //String clientThreadId = (String) server_obj.get("clientThreadId");
+                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"true\", \"clientThreadId\" :" + clientThreadId + "}");
+                        } else{
+                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"false\"}");
+                        }
+                    }
+                    else if(server_obj.get("type").equals("addnewclient")){
+                        if(server_obj.get("approved").equals("true")){
+                            // add clientHandlerThread, "clientThreadId" to the server sent the req
+                            long clientThreadId = (long)server_obj.get("clientThreadId");
+                            ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
+                            mainHall.addMember(Server.getClientHandlerThread(clientThreadId));
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                        }else{
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                        }
+                    }else if(server_obj.get("type").equals("quit")){
+                        if(LeaderState.getInstance().removeClient((String) server_obj.get("clientIdToRemove"))){
+                            System.out.println("Client removed successfully");
+                        }else{
+                            System.out.println("couldn't remove the client");
+                        }
+
+                    } else if (server_obj.get("type").equals("createRoom")) {
+                        writer.println(approveCreateRoom(server_obj));
+                    } else if (server_obj.get("type").equals("deleteRoom")) {
+                        updateDeleteRoom(server_obj);
+                    } else if (server_obj.get("type").equals("allRooms")) {
+                        writer.println(getAllRooms(server_obj));
                     }
                 }
 
@@ -116,6 +154,13 @@ public class ServerHandlerThread implements Runnable{
         System.out.println( Arrays.toString(LeaderState.getInstance().getActiveClientsList().toArray()) );
         System.out.println( Arrays.toString(LeaderState.getInstance().getActiveChatRooms().toArray()) );
         System.out.println( Arrays.toString(LeaderState.getInstance().getActiveViews().toArray()) );
+    }
+
+    private JSONObject getAllRooms(JSONObject server_obj) throws ParseException{
+        Set<JSONObject> allRooms = LeaderState.getInstance().getActiveChatRooms();
+        JSONObject responseObj = ServerResponse.sendAllRooms(allRooms);
+
+        return responseObj;
     }
 
 

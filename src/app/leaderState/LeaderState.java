@@ -6,11 +6,9 @@ import app.server.ClientHandlerThread;
 import app.serversState.ServersState;
 import org.json.simple.JSONObject;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+
+import java.util.*;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LeaderState {
@@ -101,6 +99,51 @@ public class LeaderState {
     public boolean isElectedLeader() {
 //        System.out.println(FastBullyAlgorithm.isLeader + " " + isLeader());
         return FastBullyAlgorithm.isLeader && isLeader();
+    }
+
+    public boolean addClient(String newClientId){ //adding client to the global list
+        Set<String> activeClients = getActiveClientsList();
+        if(activeClients.contains(newClientId)){ // client already exist
+            System.out.println("LeaderState - Client exist");
+            for (String s : activeClients) {
+                System. out. println(s);
+            }
+            return false;
+        }else{
+            System.out.println("LeaderState - client doesnt exist");
+            System.out.println("============================================");
+
+            activeClients.add(newClientId);
+
+            List<String> activeClientsList = new ArrayList<String>();
+            for(String client : activeClients){
+                activeClientsList.add(client);
+            }
+
+            addClients(activeClientsList);
+
+            for (String s : activeClients) {
+                System. out. println(s);
+            }
+
+            return true;
+        }
+    }
+
+    public boolean removeClient(String clientId){
+        Set<String> activeClients = getActiveClientsList();
+        if(activeClients.contains(clientId)){
+            activeClients.remove(clientId);
+
+            ArrayList<String> activeClientsList = new ArrayList<String>();
+            for(String client : activeClients){
+                activeClientsList.add(client);
+            }
+            addClients(activeClientsList);
+            return true;
+        }else{
+            return false;
+        }
     }
 
 
