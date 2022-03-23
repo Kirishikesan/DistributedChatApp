@@ -91,7 +91,7 @@ public class Server implements Runnable{
         return new ChatRoom(roomId, null);
     }
 
-    public static void removeClientSocket(Long clientThreadId) {
+    public static void removeClientThread(Long clientThreadId) {
         System.out.println("clientSocket thread stop");
 
         Thread client_thread = client_threads.get(clientThreadId);

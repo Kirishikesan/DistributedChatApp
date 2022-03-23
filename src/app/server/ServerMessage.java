@@ -29,6 +29,7 @@ public class ServerMessage {
     //send message to leader
     public static void sendToLeader(JSONObject message) throws IOException
     {
+        System.out.println("Sending to leader");
         int leaderId = LeaderState.getInstance().getLeaderId();
         ConcurrentHashMap<Integer, Server> serversMap = ServersState.getInstance().getServersMap();
 
@@ -50,6 +51,7 @@ public class ServerMessage {
         JSONParser parser = new JSONParser();
         writer.println(message);
         String msg = bufferedReader.readLine();
+        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" + msg);
         return (JSONObject) parser.parse(msg);
     }
 

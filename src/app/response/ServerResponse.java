@@ -88,6 +88,15 @@ public class ServerResponse {
     	
     	return responseObj;
     }
+
+    public static JSONObject createClient(String identity, long clientThreadId) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type","newidentity");
+        responseObj.put("identity", identity);
+        responseObj.put("clientThreadId", clientThreadId);
+
+        return responseObj;
+    }
     
     public static JSONObject deleteRoom(String identity, String serverId) {
     	JSONObject responseObj = new JSONObject();

@@ -42,6 +42,10 @@ public class ClientHandlerThread implements Runnable {
     public ClientHandlerThread() {
     }
 
+//    public Socket getClientSocket() {
+//        return clientSocket;
+//    }
+
     public ClientHandlerThread(Socket clientSocket) throws IOException {
         this.clientSocket = clientSocket;
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -87,11 +91,26 @@ public class ClientHandlerThread implements Runnable {
                             mainHall.addMember(this);
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
                         }else{ // client already exist
+                            System.out.println("client already exist");
                             writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            clientSocket.close();
+                            Server.removeClientThread(this.clientThreadId);
                         }
                     } else{
-                        client_obj.put("clientThreadId",this.getClientThreadId());
-                        sendToLeader(client_obj);
+                        System.out.println("This server is not the leader");
+                        //client_obj.put("clientThreadId",this.getClientThreadId());
+                        JSONObject response_obj = ServerMessage.requestLeader(ServerResponse.createClient(clientId, this.getClientThreadId()));
+                        //sendToLeader(client_obj);
+                        if(response_obj.get("approved").equals("true")){
+                            ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
+                            mainHall.addMember(this);
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                        }else{
+                            System.out.println("client already exist");
+                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            clientSocket.close();
+                            Server.removeClientThread(this.clientThreadId);
+                        }
                     }
 
 //                creating rooms
@@ -189,8 +208,8 @@ public class ClientHandlerThread implements Runnable {
                 }
 
             } catch (Exception e) {
-                System.out.println("client - " + e);
-                e.printStackTrace();
+                System.out.println("client exception - " + e);
+                //e.printStackTrace();
             }
         }
     }
@@ -412,7 +431,7 @@ public class ClientHandlerThread implements Runnable {
             //update local server
             ChatRoom quitChatRoom = ServersState.getInstance().getChatRoomsMap().get(roomId);
             quitChatRoom.removeMember(this);
-            Server.removeClientSocket(this.clientThreadId);
+            Server.removeClientThread(this.clientThreadId);
 
             // TO Do - update global server
             if(LeaderState.getInstance().isLeader()){
