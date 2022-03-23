@@ -38,7 +38,7 @@ public class ClientHandlerThread implements Runnable {
 
     final Object lock = new Object();
 
-    private int serverid = Server.getserverId();
+    //private int serverid = Server.getserverId();
 
 
     public ClientHandlerThread() {
