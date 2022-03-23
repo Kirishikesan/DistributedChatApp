@@ -58,7 +58,7 @@ public class ClientResponse {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "serverchange");
         responseObj.put("approved", "true");
-        responseObj.put("serverid", serverId);
+        responseObj.put("serverid", String.valueOf(serverId));
 
         return responseObj;
     }

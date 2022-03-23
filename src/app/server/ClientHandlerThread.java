@@ -256,6 +256,7 @@ public class ClientHandlerThread implements Runnable {
 
             } catch (Exception e) {
                 System.out.println("client exception - " + e);
+                Server.removeClientThread(this.clientThreadId);
                 //e.printStackTrace();
             }
         }
@@ -372,8 +373,6 @@ public class ClientHandlerThread implements Runnable {
                         break;
                     }
                 }
-            } else {
-                //                TODO Remove client from the existing server
             }
 
 
@@ -523,7 +522,7 @@ public class ClientHandlerThread implements Runnable {
             if (ServersState.getInstance().getChatRoomsMap().get(key).getOwner().equals(clientId))
                 isQuitRoomOwnerExist = true;
         }
-        System.out.println("isQuitRoomIdExist "+isQuitRoomIdExist+"isQuitRoomOwnerExist "+isQuitRoomOwnerExist);
+        System.out.println("isQuitRoomIdExist " + isQuitRoomIdExist + "isQuitRoomOwnerExist " + isQuitRoomOwnerExist);
 //        System.out.println("cl - " + this.clientId + " " + roomId);
 
         if (isQuitRoomIdExist) {
