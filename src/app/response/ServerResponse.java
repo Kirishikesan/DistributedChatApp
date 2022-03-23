@@ -82,7 +82,7 @@ public class ServerResponse {
     public static JSONObject createRoom(String identity, String serverId, String ownerId) {
     	JSONObject responseObj = new JSONObject();
     	responseObj.put("type","createRoom");
-    	responseObj.put("identity", identity);
+    	responseObj.put("roomId", identity);
     	responseObj.put("serverId",serverId);
     	responseObj.put("ownerId",ownerId);
     	
@@ -97,7 +97,21 @@ public class ServerResponse {
 
         return responseObj;
     }
-    
+
+    public static JSONObject getAllRooms() {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type","allRooms");
+
+        return responseObj;
+    }
+
+    public static JSONObject sendAllRooms(Set<JSONObject> allRooms) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("allRooms",allRooms);
+
+        return responseObj;
+    }
+
     public static JSONObject deleteRoom(String identity, String serverId) {
     	JSONObject responseObj = new JSONObject();
     	responseObj.put("type","deleteRoom");
