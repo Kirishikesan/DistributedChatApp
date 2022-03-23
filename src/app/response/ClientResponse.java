@@ -54,11 +54,11 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject serverChange(String serverId) {
+    public static JSONObject serverChange(int serverId) {
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "serverchange");
         responseObj.put("approved", "true");
-        responseObj.put("serverid", "serverId");
+        responseObj.put("serverid", serverId);
 
         return responseObj;
     }
