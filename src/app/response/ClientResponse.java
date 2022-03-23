@@ -32,12 +32,33 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
+    public static JSONObject routeChatRoomResponse(String roomId, String serverAddress, String clientPort) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "route");
+        responseObj.put("roomid", roomId);
+        responseObj.put("host", serverAddress);
+        responseObj.put("port", clientPort);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
     public static JSONObject listChatRoomsResponse(ConcurrentHashMap<String, ChatRoom> m) {
         List<String> chatRoomsList = new ArrayList<>();
-        m.forEach((key,chatRoom) -> chatRoomsList.add(chatRoom.getRoomId()));
+        m.forEach((key, chatRoom) -> chatRoomsList.add(chatRoom.getRoomId()));
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "roomlist");
         responseObj.put("rooms", chatRoomsList);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject serverChange(String serverId) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "serverchange");
+        responseObj.put("approved", "true");
+        responseObj.put("serverid", "serverId");
 
         return responseObj;
     }
@@ -62,7 +83,7 @@ public class ClientResponse {
 
         return responseObj;
     }
-      
+
     @SuppressWarnings("unchecked")
     public static JSONObject messageChatRoom(String clientId, String content) {
         JSONObject responseObj = new JSONObject();

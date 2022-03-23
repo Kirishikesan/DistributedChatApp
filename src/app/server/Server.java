@@ -1,16 +1,12 @@
 package app.server;
 
-import app.leaderState.LeaderState;
 import app.room.ChatRoom;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server implements Runnable{
@@ -47,6 +43,10 @@ public class Server implements Runnable{
 
     public int getCoordinationPort() {
         return coordination_port;
+    }
+
+    public String getClients_port() {
+        return String.valueOf(clients_port);
     }
 
     public void run() {
