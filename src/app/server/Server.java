@@ -1,12 +1,12 @@
 package app.server;
 
 import app.room.ChatRoom;
-import app.serversState.ServersState;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server implements Runnable{
@@ -22,22 +22,20 @@ public class Server implements Runnable{
     public static ServerSocket serverClientSocket;
     public static ServerSocket serverCoordinationSocket;
 
-
     //    public static ConcurrentHashMap<Long, Client> client_threads = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<Long, Thread> client_threads = new ConcurrentHashMap<>();
+    public static HashMap<Long, ClientHandlerThread> clientHandlerThreadsMap = new HashMap<>();
 
     public Server(int serverId, String server_address, int clients_port, int coordination_port) {
         this.serverId = serverId;
         this.server_address = server_address;
         this.clients_port = clients_port;
         this.coordination_port = coordination_port;
-
     }
 
     public int getserverId() {
         return serverId;
     }
-
 
     public String getServerAddress() {
         return server_address;
@@ -45,6 +43,10 @@ public class Server implements Runnable{
 
     public int getCoordinationPort() {
         return coordination_port;
+    }
+
+    public String getClients_port() {
+        return String.valueOf(clients_port);
     }
 
     public void run() {
@@ -74,20 +76,22 @@ public class Server implements Runnable{
 
                 clientHandlerThread.setClientThreadId(client_thread.getId());
                 client_threads.put(client_thread.getId(), client_thread);
-
-
+                clientHandlerThreadsMap.put(client_thread.getId(), clientHandlerThread);
             } catch (Exception e) {
                 System.out.println("server" + e);
             }
         }
+    }
 
+    public static ClientHandlerThread getClientHandlerThread(long clientThreadId){
+        return clientHandlerThreadsMap.get(clientThreadId);
     }
 
     public ChatRoom create_default_chat_room(String roomId) {
         return new ChatRoom(roomId, null);
     }
 
-    public static void removeClientSocket(Long clientThreadId) {
+    public static void removeClientThread(Long clientThreadId) {
         System.out.println("clientSocket thread stop");
 
         Thread client_thread = client_threads.get(clientThreadId);

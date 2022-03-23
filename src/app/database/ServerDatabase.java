@@ -71,7 +71,7 @@ public class ServerDatabase {
             ps.setString(1, server_id);
             result = ps.executeQuery();
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.out.println("WARN: SQL getView Error - " + e.getMessage());
         }
         return result;

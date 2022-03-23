@@ -16,27 +16,16 @@ public class DatabaseConnection {
     private DatabaseConnection() {
     }
 
-    public void initializeDatabaseConnection(String serverId, String server_config_path) {
-        String db_config_path = server_config_path.replace("server_config", "database_config");
+    public void initializeDatabaseConnection() {
 
         try {
-            File file = new File(db_config_path);
-            Scanner myReader = new Scanner(file);
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                String[] db_config = data.split(" ");
-                
-                if (db_config[0].equals(serverId)) {
-                    String url = db_config[1];
-                    String user = db_config[2];
-                    String password = "";
+            String url = "jdbc:mysql://localhost:3306/chatApp";
+            String user = "root";
+            String password = "";
 
-                    Class.forName("com.mysql.cj.jdbc.Driver");
-                    connection = DriverManager.getConnection(url, user, password);
-                    System.out.println("Info: DB Connect ");
-                }
-
-            }
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(url, user, password);
+            System.out.println("Info: DB Connect ");
 
         } catch (Exception e) {
             System.out.println("An error occurred - " + e.getMessage());
