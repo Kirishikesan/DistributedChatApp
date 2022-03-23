@@ -93,10 +93,14 @@ public class ClientHandlerThread implements Runnable {
                         if (LeaderState.getInstance().addClient(clientId)) { // client doesnt  exist
                             ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
                             mainHall.addMember(this);
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                            JSONObject jsonRes = ClientResponse.newIdentityResp("true");
+                            writer.println(jsonRes);
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
                         } else { // client already exist
                             System.out.println("client already exist");
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            JSONObject jsonRes = ClientResponse.newIdentityResp("false");
+                            writer.println(jsonRes);
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
                             clientSocket.close();
                             Server.removeClientThread(this.clientThreadId);
                         }
@@ -108,10 +112,14 @@ public class ClientHandlerThread implements Runnable {
                         if (response_obj.get("approved").equals("true")) {
                             ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
                             mainHall.addMember(this);
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                            JSONObject jsonRes = ClientResponse.newIdentityResp("true");
+                            writer.println(jsonRes);
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
                         } else {
                             System.out.println("client already exist");
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            JSONObject jsonRes = ClientResponse.newIdentityResp("false");
+                            writer.println(jsonRes);
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
                             clientSocket.close();
                             Server.removeClientThread(this.clientThreadId);
                         }
@@ -511,8 +519,6 @@ public class ClientHandlerThread implements Runnable {
     private String[] quit(JSONObject client_obj) throws IOException {
 
         String[] quitRoomIdsArray = {roomId, roomId};
-
-        System.out.println("INSIDE QUIT FUNCTION...");
 
         boolean isQuitRoomIdExist = false;
         boolean isQuitRoomOwnerExist = false;

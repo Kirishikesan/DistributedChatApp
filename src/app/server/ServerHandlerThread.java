@@ -67,9 +67,13 @@ public class ServerHandlerThread implements Runnable {
                         if (LeaderState.getInstance().addClient(clientId)) {
                             String clientThreadId = String.valueOf(server_obj.get("clientThreadId"));
                             //String clientThreadId = (String) server_obj.get("clientThreadId");
-                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"true\", \"clientThreadId\" :" + clientThreadId + "}");
+                            JSONObject jsonResp = ServerResponse.addNewClientResp("true",clientThreadId);
+                            writer.println(jsonResp);
+                            //writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"true\", \"clientThreadId\" :" + clientThreadId + "}");
                         } else {
-                            writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"false\"}");
+                            JSONObject jsonResp = ServerResponse.addNewClientResp("false",null);
+                            writer.println(jsonResp);
+                            //writer.println("{\"type\" : \"addnewclient\", \"approved\" : \"false\"}");
                         }
                     } else if (server_obj.get("type").equals("addnewclient")) {
                         if (server_obj.get("approved").equals("true")) {
@@ -77,9 +81,13 @@ public class ServerHandlerThread implements Runnable {
                             long clientThreadId = (long) server_obj.get("clientThreadId");
                             ChatRoom mainHall = ServersState.getInstance().getChatRoomsMap().get(ServersState.getInstance().getChatRoomsMap().keySet().toArray()[0]);
                             mainHall.addMember(Server.getClientHandlerThread(clientThreadId));
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
+                            JSONObject jsonRes = ServerResponse.newIdentityResp("true");
+                            writer.println(jsonRes);
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"true\"}");
                         } else {
-                            writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
+                            JSONObject jsonRes = ServerResponse.newIdentityResp("false");
+                            writer.println(jsonRes);
+                            //writer.println("{\"type\" : \"newidentity\", \"approved\" : \"false\"}");
                         }
                     } else if (server_obj.get("type").equals("quit")) {
                         if (LeaderState.getInstance().removeClient((String) server_obj.get("clientIdToRemove"))) {

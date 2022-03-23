@@ -94,4 +94,13 @@ public class ClientResponse {
 
         return responseObj;
     }
+
+    public static JSONObject newIdentityResp(String isApproved){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "newidentity");
+        responseObj.put("approved", isApproved);
+
+        return responseObj;
+    }
+
 }
