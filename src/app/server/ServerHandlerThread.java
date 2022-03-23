@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -89,6 +90,12 @@ public class ServerHandlerThread implements Runnable{
                             System.out.println("couldn't remove the client");
                         }
 
+                    } else if (server_obj.get("type").equals("createRoom")) {
+                        writer.println(approveCreateRoom(server_obj));
+                    } else if (server_obj.get("type").equals("deleteRoom")) {
+                        updateDeleteRoom(server_obj);
+                    } else if (server_obj.get("type").equals("allRooms")) {
+                        writer.println(getAllRooms(server_obj));
                     }
               
                 }

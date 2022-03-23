@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import app.leaderState.LeaderState;
 import app.response.ClientResponse;
 import app.response.ServerResponse;
 import app.room.ChatRoom;
 import app.serversState.ServersState;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -33,7 +35,7 @@ public class ClientHandlerThread implements Runnable {
     private Socket clientSocket;
     private Long clientThreadId;
 
-    
+
     final Object lock=new Object();
 
     private int serverid = Server.getserverId();
@@ -69,7 +71,7 @@ public class ClientHandlerThread implements Runnable {
     }
 
     @Override
-    public void run(){
+    public void run() {
         System.out.println("clientSocket thread started");
         String msg = null;
         JSONObject client_obj = null;
@@ -140,28 +142,36 @@ public class ClientHandlerThread implements Runnable {
                     JSONObject listRoomsResJsonObj = ClientResponse.listChatRoomsResponse(ServersState.getInstance().getChatRoomsMap());
                     writer.println(listRoomsResJsonObj);
 
+//                    joining a room
                 } else if (client_obj.get("type").equals("joinroom")) {
                     String[] roomIdsArray = joiningRoomId(client_obj);
                     JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, roomIdsArray[0], roomIdsArray[1]);
 
                     if (!Objects.equals(roomIdsArray[0], roomIdsArray[1])) {
-                        for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                            if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomIdsArray[0])) {
-                                ServersState.getInstance().getChatRoomsMap().get(key).getMembers().forEach((former_key, clientHandlerThread) -> {
-                                    if (!former_key.equals("default")) clientHandlerThread.writer.println(listRoomsResJsonObj);
-                                });
-                                break;
+                        if (Integer.parseInt(roomIdsArray[2]) == ServersState.getInstance().getSelfServerId()) {
+                            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
+                                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomIdsArray[0])) {
+                                    ServersState.getInstance().getChatRoomsMap().get(key).getMembers().forEach((former_key, clientHandlerThread) -> {
+                                        if (!former_key.equals("default"))
+                                            clientHandlerThread.writer.println(listRoomsResJsonObj);
+                                    });
+                                    break;
+                                }
                             }
+
+                            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
+                                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomIdsArray[1])) {
+                                    ServersState.getInstance().getChatRoomsMap().get(key).getMembers().forEach((new_key, clientHandlerThread) -> {
+                                        if (!new_key.equals("default"))
+                                            clientHandlerThread.writer.println(listRoomsResJsonObj);
+                                    });
+                                    break;
+                                }
+                            }
+                        }else{
+
                         }
 
-                        for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                            if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomIdsArray[1])) {
-                                ServersState.getInstance().getChatRoomsMap().get(key).getMembers().forEach((new_key, clientHandlerThread) -> {
-                                    if (!new_key.equals("default")) clientHandlerThread.writer.println(listRoomsResJsonObj);
-                                });
-                                break;
-                            }
-                        }
 
                     } else {
                         writer.println(listRoomsResJsonObj);
@@ -266,40 +276,89 @@ public class ClientHandlerThread implements Runnable {
         return roomIdsArray;
     }
 
-    private String[] joiningRoomId(JSONObject client_obj) {
+    private String[] joiningRoomId(JSONObject client_obj) throws IOException, ParseException {
         String joiningRoomId = (String) client_obj.get("roomid");
-        String[] roomIdsArray = {roomId, roomId};
+        int serverId = ServersState.getInstance().getSelfServerId();
+        String[] roomIdsArray = {roomId, roomId, String.valueOf(serverId)};
+        JSONObject responseObj;
         boolean isJoiningRoomIdExist = false;
+
+//        check client is an owner (locally)
         for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-            if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(joiningRoomId)) isJoiningRoomIdExist = true;
-            if (ServersState.getInstance().getChatRoomsMap().get(key).getOwner().equals(clientId)) return roomIdsArray;
+            if (ServersState.getInstance().getChatRoomsMap().get(key).getOwner().equals(clientId))
+                return roomIdsArray;
         }
-        if (isJoiningRoomIdExist) {
 
-            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomId)) {
-                    ServersState.getInstance().getChatRoomsMap().get(key).removeMember(this);
+//        check client is leader
+        if (LeaderState.getLeaderStateInstance().isLeader()) {
+            Set<JSONObject> allChatRooms = LeaderState.getInstance().getActiveChatRooms();
+            System.out.println(allChatRooms);
+
+            for (JSONObject activeChatRoom : allChatRooms) {
+                if (activeChatRoom.get("chatRoomId").equals(joiningRoomId)) {
+                    isJoiningRoomIdExist = true;
+                    serverId = (int) activeChatRoom.get("serverId");
                     break;
+                }
+                if (activeChatRoom.get("ownerId").equals(clientId)) {
+                    return roomIdsArray;
                 }
             }
 
-            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(joiningRoomId)) {
-                    ServersState.getInstance().getChatRoomsMap().get(key).addMember(this);
+            if (isJoiningRoomIdExist) {
+                for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
+                    if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomId)) {
+                        ServersState.getInstance().getChatRoomsMap().get(key).removeMember(this);
+                        break;
+                    }
+                }
+
+                for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
+                    if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(joiningRoomId)) {
+                        ServersState.getInstance().getChatRoomsMap().get(key).addMember(this);
+                        break;
+                    }
+                }
+                roomIdsArray[1] = joiningRoomId;
+                roomIdsArray[2] = String.valueOf(serverId);
+                roomId = joiningRoomId;
+                return roomIdsArray;
+            } else {
+                return roomIdsArray;
+            }
+        } else {
+            responseObj = ServerMessage.requestLeader(ServerResponse.getAllRooms());
+            JSONArray chatroomsJSON = (JSONArray) new JSONParser().parse(responseObj.get("allRooms").toString());
+            List<JSONObject> allChatRooms = (List<JSONObject>) chatroomsJSON.stream().map(roomObject -> (JSONObject) roomObject).collect(Collectors.toList());
+            for (JSONObject activeChatRoom : allChatRooms) {
+                if (activeChatRoom.get("chatRoomId").equals(joiningRoomId)) {
+                    isJoiningRoomIdExist = true;
+                    serverId = (int) activeChatRoom.get("serverId");
                     break;
                 }
+                if (activeChatRoom.get("ownerId").equals(clientId)) {
+                    return roomIdsArray;
+                }
             }
-            roomIdsArray[1] = joiningRoomId;
-            roomId = joiningRoomId;
-//            ServersState.getInstance().getChatRoomsMap().forEach((key, value) -> {
-//                System.out.println(key);
-//                value.getMembers().forEach((key1,value1)->{
-//                    System.out.println(value1.clientId);
-//                });
-//            });
-            return roomIdsArray;
+            if (isJoiningRoomIdExist) {
+                for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
+                    if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomId)) {
+                        ServersState.getInstance().getChatRoomsMap().get(key).removeMember(this);
+                        break;
+                    }
+                }
+
+//                TODO Remove client from the existing server
+
+
+                roomIdsArray[1] = joiningRoomId;
+                roomIdsArray[2] = String.valueOf(serverId);
+                roomId = joiningRoomId;
+                return roomIdsArray;
+            } else {
+                return roomIdsArray;
+            }
         }
-        return roomIdsArray;
     }
 
     private boolean createChatRoomValidation(String roomId) {
