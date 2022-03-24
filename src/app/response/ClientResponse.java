@@ -1,12 +1,12 @@
 package app.response;
 
 import app.room.ChatRoom;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientResponse {
 
@@ -33,12 +33,33 @@ public class ClientResponse {
     }
 
     @SuppressWarnings("unchecked")
+    public static JSONObject routeChatRoomResponse(String roomId, String serverAddress, String clientPort) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "route");
+        responseObj.put("roomid", roomId);
+        responseObj.put("host", serverAddress);
+        responseObj.put("port", clientPort);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
     public static JSONObject listChatRoomsResponse(ConcurrentHashMap<String, ChatRoom> m) {
         List<String> chatRoomsList = new ArrayList<>();
-        m.forEach((key,chatRoom) -> chatRoomsList.add(chatRoom.getRoomId()));
+        m.forEach((key, chatRoom) -> chatRoomsList.add(chatRoom.getRoomId()));
         JSONObject responseObj = new JSONObject();
         responseObj.put("type", "roomlist");
         responseObj.put("rooms", chatRoomsList);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject serverChange(int serverId) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "serverchange");
+        responseObj.put("approved", "true");
+        responseObj.put("serverid", String.valueOf(serverId));
 
         return responseObj;
     }
@@ -53,4 +74,45 @@ public class ClientResponse {
 
         return responseObj;
     }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject deleteChatRoomResponse(String joiningRoomId, String approved) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "deleteroom");
+        responseObj.put("roomid", joiningRoomId);
+        responseObj.put("approved", approved);
+
+        return responseObj;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject messageChatRoom(String clientId, String content) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "message");
+        responseObj.put("identity", clientId);
+        responseObj.put("content", content);
+
+
+        return responseObj;
+    }
+
+    public static JSONObject newIdentityResp(String isApproved) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "newidentity");
+        responseObj.put("approved", isApproved);
+
+        return responseObj;
+    }
+
+    public static JSONObject getCurrentClientRequest(String joiningRoomId, ArrayList<String> clients, String ownerId) {
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "roomcontents");
+        responseObj.put("roomid", joiningRoomId);
+        responseObj.put("identities", clients);
+        responseObj.put("owner", ownerId);
+
+
+        return responseObj;
+    }
+
 }
