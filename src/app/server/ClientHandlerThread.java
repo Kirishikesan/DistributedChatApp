@@ -186,6 +186,8 @@ public class ClientHandlerThread implements Runnable {
                             JSONObject routeRoomsResJsonObj = ClientResponse.routeChatRoomResponse(roomIdsArray[1], joiningServer.getServerAddress(), joiningServer.getClients_port());
 
                             writer.println(routeRoomsResJsonObj);
+                            Server.removeClientThread(clientThreadId);
+//                            clientSocket.close();
                         }
 
 
@@ -195,19 +197,22 @@ public class ClientHandlerThread implements Runnable {
 
                 } else if (client_obj.get("type").equals("movejoin")) {
                     String[] roomIdsArray = moveJoinRoom(client_obj);
-                    JSONObject joinRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, roomIdsArray[0], roomIdsArray[1]);
                     JSONObject serverChangeResJsonObj = ClientResponse.serverChange(ServersState.getInstance().getSelfServerId());
                     if (roomIdsArray[2].equals("true")) {
+                        JSONObject joinRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, roomIdsArray[3], roomIdsArray[1]);
+
                         for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
                             if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomIdsArray[1])) {
                                 ServersState.getInstance().getChatRoomsMap().get(key).getMembers().forEach((new_key, clientHandlerThread) -> {
-                                    if (!new_key.equals("default"))
+                                    if (!new_key.equals("default") && !clientHandlerThread.clientId.equals(clientId))
                                         clientHandlerThread.writer.println(joinRoomsResJsonObj);
                                 });
                                 break;
                             }
                         }
                     } else {
+                        JSONObject joinRoomsResJsonObj = ClientResponse.joinChatRoomResponse(clientId, roomIdsArray[3], roomIdsArray[0]);
+
                         for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
                             if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(roomIdsArray[0])) {
                                 ServersState.getInstance().getChatRoomsMap().get(key).getMembers().forEach((new_key, clientHandlerThread) -> {
@@ -337,7 +342,6 @@ public class ClientHandlerThread implements Runnable {
 //        check client is leader
         if (LeaderState.getLeaderStateInstance().isLeader()) {
             Set<JSONObject> allChatRooms = LeaderState.getInstance().getActiveChatRooms();
-            System.out.println(allChatRooms);
 
             for (JSONObject activeChatRoom : allChatRooms) {
                 if (activeChatRoom.get("chatRoomId").equals(joiningRoomId)) {
@@ -398,27 +402,20 @@ public class ClientHandlerThread implements Runnable {
         String joiningRoomId = client_obj.get("roomid").toString();
         String mainHallId = "MainHall-s" + String.valueOf(ServersState.getInstance().getSelfServerId());
         boolean isJoinedSuccess = false;
-        String[] roomIdsArray = {mainHallId, joiningRoomId, Boolean.toString(isJoinedSuccess)};
+        String[] roomIdsArray = {mainHallId, joiningRoomId, Boolean.toString(isJoinedSuccess), (String) client_obj.get("former")};
         ChatRoom chatRoom = ServersState.getInstance().getChatRoomsMap().get(joiningRoomId);
         if (chatRoom == null) {
-            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(mainHallId)) {
-                    ServersState.getInstance().getChatRoomsMap().get(key).addMember(this);
-                    break;
-                }
-            }
+
+            ServersState.getInstance().getChatRoomsMap().get(mainHallId).addMember(this);
+            roomId = mainHallId;
         } else {
 
 //            TODO: add client to the server
 
             isJoinedSuccess = true;
             roomIdsArray[2] = Boolean.toString(isJoinedSuccess);
-            for (String key : ServersState.getInstance().getChatRoomsMap().keySet()) {
-                if (ServersState.getInstance().getChatRoomsMap().get(key).getRoomId().equals(joiningRoomId)) {
-                    ServersState.getInstance().getChatRoomsMap().get(key).addMember(this);
-                    break;
-                }
-            }
+            chatRoom.addMember(this);
+            roomId = joiningRoomId;
         }
         return roomIdsArray;
 
