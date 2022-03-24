@@ -11,7 +11,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
+import app.database.ServerDatabase;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -144,6 +144,7 @@ public class ServerHandlerThread implements Runnable {
 
         int senderId = Integer.parseInt(server_obj.get("identity").toString());
         LeaderState.getInstance().setActiveViews(senderId);
+        ServerDatabase.saveView(LeaderState.getInstance().getActiveViews());
 
         List<String> clients = new ArrayList<String>(Arrays.asList(server_obj.get("clients").toString()));
 
