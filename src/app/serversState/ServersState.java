@@ -53,7 +53,11 @@ public class ServersState {
                 String data = myReader.nextLine();
                 String[] server_config = data.split(" ");
 
-                Server server = new Server(Integer.parseInt(server_config[0].substring(1, 2)), server_config[1], Integer.parseInt(server_config[2]), Integer.parseInt(server_config[3]));
+                String server_address = server_config[4];
+                if (server_config[0].equals(serverId)) {
+                    server_address = server_config[1];
+                }
+                Server server = new Server(Integer.parseInt(server_config[0].substring(1, 2)), server_address, Integer.parseInt(server_config[2]), Integer.parseInt(server_config[3]));
                 serversMap.put(Integer.parseInt(server_config[0].substring(1, 2)), server);
 
                 if (server_config[0].equals(serverId)) {

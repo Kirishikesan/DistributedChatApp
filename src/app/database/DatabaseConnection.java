@@ -19,16 +19,17 @@ public class DatabaseConnection {
     public void initializeDatabaseConnection() {
 
         try {
-            String url = "jdbc:mysql://localhost:3306/chatApp";
-            String user = "root";
-            String password = "";
+            String url = "jdbc:mysql://database-1.cekawtkg31nl.us-east-1.rds.amazonaws.com:3306/chatApp";
+            String user = "admin";
+            String password = "DistributedChatApp2022";
 
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, user, password);
             System.out.println("Info: DB Connect ");
 
         } catch (Exception e) {
-            System.out.println("An error occurred - " + e.getMessage());
+            System.out.println("An error occurred - " + e.toString());
+            e.printStackTrace();
         }
     }
 
