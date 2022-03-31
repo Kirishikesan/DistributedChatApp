@@ -262,7 +262,6 @@ public class ClientHandlerThread implements Runnable {
 
                         //close connection
                         clientSocket.close();
-
                     }
 
                 } else if (client_obj.get("type").equals("who")) {
@@ -270,6 +269,7 @@ public class ClientHandlerThread implements Runnable {
                     String ownerId = currentRoomOwner();
                     JSONObject messageClientListJsonObj = ClientResponse.getCurrentClientRequest(roomId, clientList, ownerId);
                     writer.println(messageClientListJsonObj);
+
                 }
 
             } catch (Exception e) {

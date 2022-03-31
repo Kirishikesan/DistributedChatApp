@@ -103,6 +103,16 @@ public class ClientResponse {
 
         return responseObj;
     }
+    public static JSONObject roomMembers(String roomid, ArrayList<String> identities, String owner){
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("type", "roomcontents");
+        responseObj.put("roomid", roomid);
+        responseObj.put("identities", identities);
+        responseObj.put("owner", owner);
+
+        return responseObj;
+    }
+
 
     public static JSONObject getCurrentClientRequest(String joiningRoomId, ArrayList<String> clients, String ownerId) {
         JSONObject responseObj = new JSONObject();
