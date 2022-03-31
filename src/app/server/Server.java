@@ -3,6 +3,7 @@ package app.server;
 import app.room.ChatRoom;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -52,10 +53,16 @@ public class Server implements Runnable{
     public void run() {
 
         try {
+            InetAddress ip = InetAddress.getLocalHost();
+            String internal_address = ip.getHostAddress();
+
+            System.out.print("My external IP address is: " + internal_address + " - " + server_address);
+
             serverClientSocket = new ServerSocket();
-            serverClientSocket.bind(new InetSocketAddress(server_address, clients_port));
+            serverClientSocket.bind(new InetSocketAddress(internal_address, clients_port));
             serverCoordinationSocket = new ServerSocket();
-            serverCoordinationSocket.bind(new InetSocketAddress(server_address, coordination_port));
+            serverCoordinationSocket.bind(new InetSocketAddress(internal_address, coordination_port));
+
         } catch (IOException e) {
             e.printStackTrace();
         }

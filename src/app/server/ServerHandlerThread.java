@@ -102,10 +102,9 @@ public class ServerHandlerThread implements Runnable {
 
                 }
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ParseException e) {
-                e.printStackTrace();
+            }catch (Exception e) {
+                System.out.println("serverThread exception - " + e);
+//                e.printStackTrace();
             }
         }
     }
