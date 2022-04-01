@@ -1,6 +1,5 @@
 package app.election;
 
-import app.database.ServerDatabase;
 import app.leaderState.LeaderState;
 import app.response.ServerResponse;
 import app.server.Server;
@@ -12,8 +11,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,16 +49,13 @@ public class FastBullyAlgorithm implements Runnable{
 
         System.out.println("start FastBullyAlgorithm");
 
-        if(isRecoverdServer()){
-            // start IAMUP
-            Runnable procedure = new FastBullyAlgorithm("iamup");
-            new Thread(procedure).start();
-        }else{
+        // start IAMUP
+        Runnable procedure = new FastBullyAlgorithm("iamup");
+        new Thread(procedure).start();
 
-            // start initial election
-            Runnable procedure = new FastBullyAlgorithm("election");
-            new Thread(procedure).start();
-        }
+//        // start initial election
+//        Runnable procedure = new FastBullyAlgorithm("election");
+//        new Thread(procedure).start();
 
     }
 
@@ -231,7 +225,6 @@ public class FastBullyAlgorithm implements Runnable{
 
         //reset views - remove leader from view
         ServersState.getInstance().resetViews();
-        ServerDatabase.saveView(ServersState.getInstance().getViews());
 
         answerStatus = false;
         viewStatus = false;
@@ -389,20 +382,11 @@ public class FastBullyAlgorithm implements Runnable{
     public static void handleViews(){
 
         int selfServerId = ServersState.getInstance().getSelfServerId();
-        Set<Integer> localViews = getSavedView();
 
         //  0.4.1 Pi compares its view with the received views
-        if(!localViews.equals(incomingViews)){
-
-            //  0.4.2 If the received view is different from the Pi’s view, Pi updates its view
-            ServersState.getInstance().resetViews();
-            ServersState.getInstance().setViewsList(incomingViews);
-            ServerDatabase.saveView(ServersState.getInstance().getViews());
-        }else{
-
-            ServersState.getInstance().resetViews();
-            ServersState.getInstance().setViewsList(localViews);
-        }
+        //  0.4.2 If the received view is different from the Pi’s view, Pi updates its view
+        ServersState.getInstance().resetViews();
+        ServersState.getInstance().setViewsList(incomingViews);
 
         int maxView = Collections.max(ServersState.getInstance().getViews());
 
@@ -467,7 +451,6 @@ public class FastBullyAlgorithm implements Runnable{
         LeaderState.getInstance().resetLeader(); // reset leader lists when newly elected
 
         LeaderState.getInstance().setActiveViews(selfServerId);
-        ServerDatabase.saveView(LeaderState.getInstance().getActiveViews());
 
         isLeader = true;
 
@@ -589,7 +572,7 @@ public class FastBullyAlgorithm implements Runnable{
 
         ServersState.getInstance().resetViews();
         ServersState.getInstance().setViews(electedLeaderId);
-        ServerDatabase.saveView(ServersState.getInstance().getViews());
+
 
         System.out.println( "INFO : Receive coordination message & Server s" + electedLeaderId + " is Admit as leader " );
 
@@ -608,29 +591,6 @@ public class FastBullyAlgorithm implements Runnable{
 
     }
 
-    public static boolean isRecoverdServer(){
-        boolean isRecoverd = false;
-        Set<Integer> localViews = getSavedView();
-        System.out.println("INFO: savedView - " + localViews.toString());
-        isRecoverd = !localViews.isEmpty();
-        return isRecoverd;
-    }
-
-    public static Set<Integer> getSavedView(){
-        Set<Integer> localViews = Collections.synchronizedSet(new HashSet<>());;
-        ResultSet recoverView = ServerDatabase.getView();
-        try {
-            if(recoverView.next()){
-
-                List<String> recoverViewList = new ArrayList<String>(Arrays.asList(recoverView.getString(1).split(",")));
-                Set<Integer> savedView = recoverViewList.stream().map(recoverViewObject -> Integer.parseInt(recoverViewObject)).collect(Collectors.toSet());
-                localViews.addAll(savedView);            }
-        } catch (Exception e) {
-            System.out.println("WARN: SQL getSavedView Error - " + e.getMessage());
-        }
-
-        return localViews;
-    }
 
     public static void updateIncomingView(JSONObject requestObject){
 
