@@ -369,13 +369,13 @@ public class FastBullyAlgorithm implements Runnable{
             }
 
             viewsArray.addAll(localViews);
-
             JSONObject createViewReqObj = ServerResponse.createViewRequest(selfServerId, viewsArray);
             ServerMessage.sendToServer(createViewReqObj, destinationServer);
             System.out.println("INFO : Server s"+ selfServerId +" has sent view message to s" + iamupServerId);
 
         }catch(Exception e){
             System.out.println("INFO : Server s"+ ServersState.getInstance().getSelfServerId() +" has failed. view message can not be sent to " + iamupServerId);
+            System.out.println(e.getMessage());
         }
     }
 
