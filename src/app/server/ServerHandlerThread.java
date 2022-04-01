@@ -152,7 +152,7 @@ public class ServerHandlerThread implements Runnable {
         LeaderState.getInstance().addClients(clients);
         LeaderState.getInstance().addChatRooms(chatrooms);
 
-        System.out.println("Sent local updated from s" + senderId);
+        System.out.println("Received local updated from s" + senderId);
         System.out.println("Active Clients List" + Arrays.toString(LeaderState.getInstance().getActiveClientsList().toArray()));
         System.out.println("Active ChatRooms" + Arrays.toString(LeaderState.getInstance().getActiveChatRooms().toArray()));
         System.out.println("Active Views" + Arrays.toString(LeaderState.getInstance().getActiveViews().toArray()));
