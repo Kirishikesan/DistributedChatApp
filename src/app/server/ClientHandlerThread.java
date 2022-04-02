@@ -238,7 +238,7 @@ public class ClientHandlerThread implements Runnable {
                             LeaderState.getInstance().deleteChatRoom((String) client_obj.get("roomid"));
                             System.out.println(LeaderState.getInstance().getActiveChatRooms());
                         } else {
-                            ServerMessage.sendToLeader(ServerResponse.deleteRoom(roomId, serverId));
+                            ServerMessage.sendToLeader(ServerResponse.deleteRoom((String) client_obj.get("roomid"), serverId));
                         }
                     }
 //                    System.out.println(LeaderState.getInstance().getActiveChatRooms());

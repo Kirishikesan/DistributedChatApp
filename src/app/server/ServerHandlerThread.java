@@ -135,7 +135,8 @@ public class ServerHandlerThread implements Runnable {
     }
 
     private void updateDeleteRoom(JSONObject server_obj) throws ParseException {
-        LeaderState.getInstance().deleteChatRoom((String) server_obj.get("roomId"));
+    	System.out.println(server_obj);
+        LeaderState.getInstance().deleteChatRoom((String) server_obj.get("identity"));
         System.out.println(LeaderState.getInstance().getActiveChatRooms());
     }
 
