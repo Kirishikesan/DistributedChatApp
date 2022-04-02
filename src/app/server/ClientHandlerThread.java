@@ -541,7 +541,7 @@ public class ClientHandlerThread implements Runnable {
                 JSONObject listRoomsResJsonObj = ClientResponse.deleteChatRoomResponse(deleteRoomIdsArray[0], String.valueOf(isRoomDeleteSuccess));
                 this.writer.println(listRoomsResJsonObj);
 
-                // TO Do - notify servers
+                // notify servers
                 String serverId = String.valueOf(ServersState.getInstance().getSelfServerId());
                 if (ServersState.getInstance().getSelfServerId() == LeaderState.getInstance().getLeaderId()) {
                     LeaderState.getInstance().deleteChatRoom(roomToDelete);
