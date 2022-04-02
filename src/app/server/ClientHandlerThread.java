@@ -273,9 +273,13 @@ public class ClientHandlerThread implements Runnable {
                 }
 
             } catch (Exception e) {
-                System.out.println("client exception - " + e);
-                Server.removeClientThread(this.clientThreadId);
-                //e.printStackTrace();
+
+                if(Objects.equals(e.getMessage(), "Connection reset")){
+                    disconnectClient();
+                }else{
+                    System.out.println("client exception - " + e.getMessage());
+                    Server.removeClientThread(this.clientThreadId);
+                }
             }
         }
     }
@@ -594,5 +598,22 @@ public class ClientHandlerThread implements Runnable {
 
         ChatRoom currentRoom = ServersState.getInstance().getChatRoomsMap().get(roomId);
         return currentRoom.getOwner();
+    }
+
+    private void disconnectClient(){
+        JSONObject quit_obj = new JSONObject();
+        quit_obj.put("type", "quit");
+        try {
+            String[] roomIdsArray = quit(quit_obj);
+            boolean isQuitSuccess = !Objects.equals(roomIdsArray[0], roomIdsArray[1]);
+            if (isQuitSuccess) {
+                //close connection
+                clientSocket.close();
+            }
+
+        } catch (IOException e) {
+            System.out.println("disconnectClient exception - " + e.getMessage());
+        }
+
     }
 }

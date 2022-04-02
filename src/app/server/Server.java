@@ -60,11 +60,11 @@ public class Server implements Runnable{
             System.out.println("My public IP address is: " + server_address);
 
             serverClientSocket = new ServerSocket();
-            serverClientSocket.bind(new InetSocketAddress(server_address, clients_port));
 //            serverClientSocket.bind(new InetSocketAddress(internal_address, clients_port));
+            serverClientSocket.bind(new InetSocketAddress(server_address, clients_port));
             serverCoordinationSocket = new ServerSocket();
-            serverCoordinationSocket.bind(new InetSocketAddress(server_address, coordination_port));
 //            serverCoordinationSocket.bind(new InetSocketAddress(internal_address, coordination_port));
+            serverCoordinationSocket.bind(new InetSocketAddress(server_address, coordination_port));
 
         } catch (IOException e) {
             e.printStackTrace();
