@@ -517,7 +517,7 @@ public class ClientHandlerThread implements Runnable {
     }
 
     private String[] quit(JSONObject client_obj) throws IOException {
-
+    	String roomToDelete = roomId;
         String[] quitRoomIdsArray = {roomId, roomId};
 
         boolean isQuitRoomIdExist = false;
@@ -542,6 +542,13 @@ public class ClientHandlerThread implements Runnable {
                 this.writer.println(listRoomsResJsonObj);
 
                 // TO Do - notify servers
+                String serverId = String.valueOf(ServersState.getInstance().getSelfServerId());
+                if (ServersState.getInstance().getSelfServerId() == LeaderState.getInstance().getLeaderId()) {
+                    LeaderState.getInstance().deleteChatRoom(roomToDelete);
+                    System.out.println(LeaderState.getInstance().getActiveChatRooms());
+                } else {
+                    ServerMessage.sendToLeader(ServerResponse.deleteRoom(roomToDelete, serverId));
+                }
 
                 quitRoomIdsArray[0] = deleteRoomIdsArray[1];
                 quitRoomIdsArray[1] = deleteRoomIdsArray[1];
