@@ -265,7 +265,7 @@ public class ClientHandlerThread implements Runnable {
                     }
 
                 } else if (client_obj.get("type").equals("who")) {
-                    ArrayList<String> clientList =  getCurrentClients();
+                    ArrayList<String> clientList = getCurrentClients();
                     String ownerId = currentRoomOwner();
                     JSONObject messageClientListJsonObj = ClientResponse.getCurrentClientRequest(roomId, clientList, ownerId);
                     writer.println(messageClientListJsonObj);
@@ -461,9 +461,12 @@ public class ClientHandlerThread implements Runnable {
             String[] moveRoomIdsArray = moveAll(formerChatRoom, mainHall);
             boolean isClientsMoveSuccess = !Objects.equals(moveRoomIdsArray[0], moveRoomIdsArray[1]);
 
+            ConcurrentHashMap<String, ClientHandlerThread> mainHallClients = mainHall.getMembers();
+
+
             if (isClientsMoveSuccess) {
                 //notify all about move
-                notifyingClients.forEach((notifyClient_key, notifyClientHandlerThread) -> {
+                mainHallClients.forEach((notifyClient_key, notifyClientHandlerThread) -> {
                     notifyingClients.forEach((formerClient_key, formerClientHandlerThread) -> {
                         if (!formerClient_key.equals("default")) {
                             JSONObject listRoomsResJsonObj = ClientResponse.joinChatRoomResponse(formerClient_key, moveRoomIdsArray[0], moveRoomIdsArray[1]);
@@ -476,17 +479,9 @@ public class ClientHandlerThread implements Runnable {
                 //delete chat room
                 ServersState.getInstance().getChatRoomsMap().remove(deleteRoomId);
 
-                //notify all about delete
                 roomIdsArray[1] = mainHall.getRoomId();
                 roomId = mainHall.getRoomId();
             }
-
-//            ServersState.getInstance().getChatRoomsMap().forEach((key, value) -> {
-//                System.out.println(key);
-//                value.getMembers().forEach((key1,value1)->{
-//                    System.out.println(value1.clientId);
-//                });
-//            });
             return roomIdsArray;
         }
         return roomIdsArray;
